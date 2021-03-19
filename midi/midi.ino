@@ -6,16 +6,15 @@
 #define kickPin A0
 
 #define learnPad 99 // Set this to the index of the pad you want to learn; set it back to 99 to stop learning from happening
-#define numPads 6 // Número de pads que irá utilizar
-#define numLeds 6 // Número de leds para acender em sequencia com os pads
+#define numPads 10 // Número de pads que irá utilizar
 
 // #define tailRecordResolution 128 // Define um tempo de recepção para cada pad (pad 1 = 128 / pad2 = 128*2 / pad3 = 128*3) assim ele diferencia cada pad
 #define tailRecordResolution 68
 
-const uint16_t triggerThresholds[numPads] = {500, 500, 500, 500, 500, 500, 500, 500}; // Threshold iniciais {pad1, pad2, pad3, pad4}
+const uint16_t triggerThresholds[numPads] = {600, 600, 600, 600, 600, 600, 600, 600, 600, 600}; // Threshold iniciais {pad1, pad2, pad3, pad4}
 
 // \/-\/-\/-\/-\/ COLOCAR AS NOTAS AQUI \/-\/-\/-\/-\/-\/
-const uint16_t notes[numPads] = {36, 37, 38, 39, 40, 41, 42, 43}; // Notas {pad1, pad2, pad3, pad4}
+const uint16_t notes[numPads] = {36, 37, 38, 39, 40, 41, 42, 43, 44, 45}; // Notas {pad1, pad2, pad3, pad4}
 
 uint32_t lastKickTime = 0;
 uint32_t kickStartTime = 0;
