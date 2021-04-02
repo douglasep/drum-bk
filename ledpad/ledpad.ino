@@ -91,9 +91,9 @@
         uint32_t secondaryColor;
       };
 
-      struct Led_Pad_Type ledPadType1 = { PAD_TYPE_1, 27, 4, 108, colorPr, colorSc };
-      struct Led_Pad_Type ledPadType2 = { PAD_TYPE_2, 36, 4, 144, colorPr, colorSc };
-      struct Led_Pad_Type ledPadType3 = { PAD_TYPE_3, PAD_TYPE_3, 4, 180, colorPr, colorSc };
+      struct Led_Pad_Type ledPadType1 = { PAD_TYPE_1, 45, 4, 108, colorPr, colorSc };
+      struct Led_Pad_Type ledPadType2 = { PAD_TYPE_2, 45, 4, 144, colorPr, colorSc };
+      struct Led_Pad_Type ledPadType3 = { PAD_TYPE_3, 45, 4, 180, colorPr, colorSc };
 
       // Pad em armazenamento
       // Tipo 2 => 36x4
@@ -126,7 +126,7 @@
       #define initialHitReadDuration 850    // In microseconds. Shorter times will mean less latency, but less velocity-accuracy
       #define midiVelocityScaleDownAmount 2 // Number of halvings that will be applied to MIDI velocity
       #define tailRecordResolution 68
-      const uint16_t triggerThresholds[NUM_PADS] = {600, 600, 600, 600, 600, 600, 600, 600, 600, 600}; // Threshold iniciais {pad1, pad2, pad3, pad4}
+      const uint16_t triggerThresholds[NUM_PADS] = {700, 700, 700, 700, 700, 700, 700, 700, 700, 700}; // Threshold iniciais {pad1, pad2, pad3, pad4}
       // const uint8_t triggerThresholds[NUM_PADS] = {500,500,500,500}; // Threshold iniciais {pad1, pad2, pad3, pad4}
 
       uint32_t lastKickTime = 0;
@@ -508,7 +508,7 @@
 
           else {
             // Assume the normal hit-threshold
-            uint16_t thresholdNow = 600; //  os Thresholds iniciais
+            uint16_t thresholdNow = 720; //  os Thresholds iniciais
             // Serial.println("--");
             // Serial.println("thresholdNow " + String(thresholdNow) + "triggerThresholds[padNo] :" + String(triggerThresholds[padNo]));
             // Serial.println("--");
@@ -641,19 +641,19 @@
         
         for (uint16_t i = 0; i < NUM_PADS; i++)
         {
-          ledStripes[i].neoPixelStripe->triggerLeds(MODE_SOLID_PR, ledStripes[i].ledPadType.typeId, i);
+          triggerLeds(MODE_SOLID_PR, ledStripes[i].ledPadType.typeId, i);
         }
         Serial.println("Iniciando PADS: ");
         delay(1000);
         for (uint16_t i = 0; i < NUM_PADS; i++)
         {
-          ledStripes[i].neoPixelStripe->triggerLeds(MODE_SOLID_SR, ledStripes[i].ledPadType.typeId, i);
+          triggerLeds(MODE_SOLID_SC, ledStripes[i].ledPadType.typeId, i);
         }
         Serial.println("Iniciando PADS: ");
         delay(800);
         for (uint16_t i = 0; i < NUM_PADS; i++)
         {
-          ledStripes[i].neoPixelStripe->triggerLeds(MODE_SOLID_PR, ledStripes[i].ledPadType.typeId, i);
+          triggerLeds(MODE_SOLID_PR, ledStripes[i].ledPadType.typeId, i);
         }
         
         Serial.println("--------------------------------------------------------------");
