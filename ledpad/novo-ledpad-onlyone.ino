@@ -11,39 +11,44 @@
       // -----------------------------------------------------------------------------
       // Pinos utilizados como Saída para os Leds dos Pads
       // -----------------------------------------------------------------------------
-      // PAD 1 - 4, 26 - Pequeno
+      // PAD 1 - 04, 26 - Pequeno
       // PAD 3 - 16, 25 - Grande
       // PAD 5 - 17, 33 - Grande
-      // PAD 7 - 5, 32 - Grande
+      // PAD 7 - 05, 32 - Grande
       // PÁD 9 - 18, 35 - Pequeno
-      #define LED_PIN_1 4
-      #define LED_PIN_2 18
-      #define LED_PIN_3 16
-      #define LED_PIN_4 17
-      #define LED_PIN_5 5
-      #define LED_PIN_6 
-      #define LED_PIN_7
-      #define LED_PIN_8
-      #define LED_PIN_9
+      #define LED_PIN_1 15
+      #define LED_PIN_2 2
+      #define LED_PIN_3 4
+      #define LED_PIN_4 16
+      #define LED_PIN_5 17
+      #define LED_PIN_6 5
+      #define LED_PIN_7 18
+      #define LED_PIN_8 19
+      #define LED_PIN_9 21
       
       // -----------------------------------------------------------------------------
       // Pinos utilizados como Entrada dos piezos dos Pads
       // -----------------------------------------------------------------------------
-      // PAD 1 - 4, 26 - Pequeno
+      // PAD 1 - 04, 26 - Pequeno
       // PAD 3 - 16, 25 - Grande
       // PAD 5 - 17, 33 - Grande
-      // PAD 7 - 5, 32 - Grande
+      // PAD 7 - 05, 32 - Grande
       // PÁD 9 - 18, 35 - Pequeno
-      #define PIEZO_PIN_1 26 // P
-      #define PIEZO_PIN_2 35 // P
-      #define PIEZO_PIN_3 25 // G
-      #define PIEZO_PIN_4 33 // G
-      #define PIEZO_PIN_5 32 // G 
-      #define PIEZO_PIN_6
-      #define PIEZO_PIN_7
-      #define PIEZO_PIN_8
-      #define PIEZO_PIN_9
-      
+      #define PIEZO_PIN_1 39 // P
+      #define PIEZO_PIN_2 34 // P
+      #define PIEZO_PIN_3 35 // G
+      #define PIEZO_PIN_4 32 // G
+      #define PIEZO_PIN_5 33 // G 
+      #define PIEZO_PIN_6 25
+      #define PIEZO_PIN_7 26
+      #define PIEZO_PIN_8 27
+      #define PIEZO_PIN_9 14
+
+      // Somente entrada 34, 35, 36, 39
+      // Pinos sem Pull UP 13, 25, 26, 27, 32 e 33
+      // Pinos com Pull UP 14, 16, 17, 18, 19, 21, 22 e 23
+      // Pinos ADC_1 32, 33, 34, 36, 37, 38, 39
+      // Pinos ADC_2 0, 2, 4, 12, 13, 14, 15, 25, 26, 27
       // -----------------------------------------------------------------------------
       // Cores disponíveis para os LEDS
       // -----------------------------------------------------------------------------
@@ -104,26 +109,13 @@
       struct Led_Pad_Type ledPadType2 = { PAD_TYPE_2, 45, 4, 144, colorPr, colorSc };
       struct Led_Pad_Type ledPadType3 = { PAD_TYPE_3, 45, 4, 180, colorPr, colorSc };
 
-      // Pad em armazenamento
-      // Tipo 2 => 36x4
-      // Tipo 3 => 45X4
-      struct Stored_Matrix {
-        Led_Pad_Type ledPadType;
-        uint8_t modo;
-        char address[7];
-      };
-
       // -----------------------------------------------------------------------------
       // Declaração de variáveis e constantes para a classe Pad
       // -----------------------------------------------------------------------------
-      // initialReadDuration 850
-      // ScaleDownAmount 2
-      // tailRecordResolution 128
       #define initialHitReadDuration 850    // In microseconds. Shorter times will mean less latency, but less velocity-accuracy
       #define midiVelocityScaleDownAmount 2 // Number of halvings that will be applied to MIDI velocity
       #define tailRecordResolution 68
       const uint16_t triggerThresholds[NUM_PADS] = {700, 700, 700, 700, 700}; // Threshold iniciais {pad1, pad2, pad3, pad4}
-      // const uint8_t triggerThresholds[NUM_PADS] = {500,500,500,500}; // Threshold iniciais {pad1, pad2, pad3, pad4}
 
       uint32_t lastKickTime = 0;
       uint32_t kickStartTime = 0;
