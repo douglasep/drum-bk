@@ -1,0 +1,51 @@
+uint32_t vermelho = 0xFF0000;
+uint32_t roxo = 0x800080;
+uint32_t rosaEscuro = 0xD80213;
+uint32_t laranja = 0x910b00;
+uint32_t amarelo = 0xff6400;
+uint32_t amareloEscuro = 0xFFD700;
+uint32_t amareloClaro = 0xFF4500;
+uint32_t verdeClaro = 0x7FFF00;
+uint32_t verde = 0x00FF00;
+uint32_t azulClaro = 0x007AA3;
+uint32_t azul = 0x0000FF;
+uint32_t branco = 0xFFFFFF;
+
+#007AA3,
+#0000FF,
+#7FFF00,
+#00FF00,
+#800080,
+#FF0000,
+#910b00,
+#D80213,
+#FF4500,
+#FFD700
+
+
+Nao vai usar
+#FFFFFF
+#b400ff
+#ff6400,x
+#FFA500,x
+#279600,
+#000080,
+#191970 
+#00008B 
+#0000CD
+#0000FF
+#1E90FF
+#008B8B
+#00BFFF
+#00CED1
+#32CD32
+#00FF7F
+#00FA9A
+#00FFFF
+#00FFFF
+#3CB371
+#2E8B57 
+#B22222
+#A52A2A 
+#B8860B
+#FFE4B5 

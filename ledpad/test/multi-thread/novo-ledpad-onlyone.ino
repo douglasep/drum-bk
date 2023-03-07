@@ -1,8 +1,9 @@
+#include <Arduino.h>
+#include <SPIFFS.h>
+#include <ESPFlash.h>
 #include <EEPROM.h>
 #include <Adafruit_NeoPixel.h>
 #include <Led_Matrix.h>
-#include <Keypad.h>
-#include <map>
 #include <vector>
 
 #define NUM_PADS 9
@@ -15,15 +16,15 @@
 // PAD 5 - 17, 33 - Grande
 // PAD 7 - 05, 32 - Grande
 // PÁD 9 - 18, 35 - Pequeno
-#define LED_PIN_1 24
-#define LED_PIN_2 25
-#define LED_PIN_3 26
-#define LED_PIN_4 27
-#define LED_PIN_5 28
-#define LED_PIN_6 29
-#define LED_PIN_7 30
-#define LED_PIN_8 31
-#define LED_PIN_9 32
+#define LED_PIN_1 15
+#define LED_PIN_2 2
+#define LED_PIN_3 4
+#define LED_PIN_4 16
+#define LED_PIN_5 17
+#define LED_PIN_6 5
+#define LED_PIN_7 18
+#define LED_PIN_8 19
+#define LED_PIN_9 21
 
 // -----------------------------------------------------------------------------
 // Pinos utilizados como Entrada dos piezos dos Pads
@@ -33,57 +34,38 @@
 // PAD 5 - 17, 33 - Grande
 // PAD 7 - 05, 32 - Grande
 // PÁD 9 - 18, 35 - Pequeno
-#define PIEZO_PIN_1 A0
-#define PIEZO_PIN_2 A1
-#define PIEZO_PIN_3 A2
-#define PIEZO_PIN_4 A3
-#define PIEZO_PIN_5 A4
-#define PIEZO_PIN_6 A5
-#define PIEZO_PIN_7 A6
-#define PIEZO_PIN_8 A7
-#define PIEZO_PIN_9 A8
-
-// -----------------------------------------------------------------------------
-// Pinos utilizados como Entradas do KEYPAD
-// -----------------------------------------------------------------------------
-#define KEYPAD_PIN_1 0
-#define KEYPAD_PIN_2 1
-#define KEYPAD_PIN_3 2
-#define KEYPAD_PIN_4 3
-#define KEYPAD_PIN_5 4
-#define KEYPAD_PIN_6 5
-#define KEYPAD_PIN_7 6
-#define KEYPAD_PIN_8 7
+#define PIEZO_PIN_1 39 // P
+#define PIEZO_PIN_2 34 // P
+#define PIEZO_PIN_3 35 // G
+#define PIEZO_PIN_4 32 // G
+#define PIEZO_PIN_5 33 // G 
+#define PIEZO_PIN_6 25
+#define PIEZO_PIN_7 26
+#define PIEZO_PIN_8 27
+#define PIEZO_PIN_9 14
 
 // Somente entrada 34, 35, 36, 39
-// Pinos sem Pull UP 13, 25, 26, 27, 32 e 33
+// Pinos sem Pull UP 13, 25, 26, 27, 33 e 35
 // Pinos com Pull UP 14, 16, 17, 18, 19, 21, 22 e 23
 // Pinos ADC_1 32, 33, 34, 36, 37, 38, 39
 // Pinos ADC_2 0, 2, 4, 12, 13, 14, 15, 25, 26, 27
+// 35 não é adc
+
 // -----------------------------------------------------------------------------
 // Cores disponíveis para os LEDS
 // -----------------------------------------------------------------------------
-uint8_t padBrightness = 255;
 
-uint32_t vermelho = 0xFF0000;
-uint32_t roxo = 0x800080;
-uint32_t rosaEscuro = 0xD80213;
-uint32_t laranja = 0x910b00;
-uint32_t amarelo = 0xff6400;
-uint32_t amareloEscuro = 0xFFD700;
-uint32_t amareloClaro = 0xFF4500;
-uint32_t verdeClaro = 0x7FFF00;
-uint32_t verde = 0x00FF00;
-uint32_t azulClaro = 0x007AA3;
-uint32_t azul = 0x0000FF;
-uint32_t branco = 0xFFFFFF;
+uint8_t colorMode = 0;
 
-const uint32_t colors[11] = { vermelho, azulClaro, rosaEscuro, verde, azul, amarelo, amareloEscuro, amareloClaro, roxo, laranja, branco }; // Threshold iniciais {pad1, pad2, pad3, pad2}
-const int colorsSize = *(&colors + 1) - colors; 
-uint8_t colorsIndex = 0;
+uint32_t vermelho =   0xFF0000; // ok
+uint32_t roxo =       0xb400ff; // a311a6
+uint32_t rosaEscuro = 0xD80213; // ok
+uint32_t laranja =    0x910b00; // ok
+uint32_t amarelo =    0xff6400;
+uint32_t verde =      0x00FF00; // ok
+uint32_t azulClaro =  0x007AA3; // ok
+uint32_t azul =       0x0000FF; // ok
 
-uint32_t offColor = 0x000000;
-uint32_t backlight = 0xFFE42D;
 uint32_t colorPr = vermelho; // Cor Primaria
 uint32_t colorSc = verde; // Cor Secundaria
 
@@ -91,7 +73,7 @@ uint32_t colorSc = verde; // Cor Secundaria
 
 uint8_t piezoPadPins[NUM_PADS] = {
   PIEZO_PIN_1, 
-  PIEZO_PIN_2,
+  PIEZO_PIN_2, 
   PIEZO_PIN_3,
   PIEZO_PIN_4,
   PIEZO_PIN_5,
@@ -113,6 +95,9 @@ enum Led_Stripe_Mode {
   MODE_BORDER
 };
 
+// Tipo 1 => 27x4
+// Tipo 2 => 36x4
+// Tipo 3 => 45X4
 struct Led_Pad_Type {
   Pad_Type typeId;
   uint8_t rowsSize;
@@ -122,38 +107,30 @@ struct Led_Pad_Type {
   uint32_t secondaryColor;
 };
 
-// Tipo 1 => 27x4
+struct Led_Pad_Type ledPadType1 = { PAD_TYPE_1, 45, 4, 108, colorPr, colorSc };
+struct Led_Pad_Type ledPadType2 = { PAD_TYPE_2, 45, 4, 144, colorPr, colorSc };
+struct Led_Pad_Type ledPadType3 = { PAD_TYPE_3, 45, 4, 180, colorPr, colorSc };
+
+// Pad em armazenamento
 // Tipo 2 => 36x4
 // Tipo 3 => 45X4
-// grande = 252 / 6 = 42
-// medio = 210 / 6 = 35 
-// pequeno = 162 / 6 = 27
-struct Led_Pad_Type ledPadType1 = { PAD_TYPE_1, 45, 6, 252, colorPr, colorSc };
-struct Led_Pad_Type ledPadType2 = { PAD_TYPE_2, 45, 6, 252, colorPr, colorSc };
-struct Led_Pad_Type ledPadType3 = { PAD_TYPE_3, 45, 6, 252, colorPr, colorSc };
-
-std::map<char, char> notes = {
-  { PIEZO_PIN_1, 36 },
-  { PIEZO_PIN_2, 37 },
-  { PIEZO_PIN_3, 38 },
-  { PIEZO_PIN_4, 39 },
-  { PIEZO_PIN_5, 40 },
-  { PIEZO_PIN_6, 45 },
-  { PIEZO_PIN_7, 42 },
-  { PIEZO_PIN_8, 43 },
-  { PIEZO_PIN_9, 44 }
+struct Stored_Matrix {
+Led_Pad_Type ledPadType;
+uint8_t modo;
+char address[7];
 };
 
 // -----------------------------------------------------------------------------
-// Declaração de variáveis e constantes para a classe Padf
+// Declaração de variáveis e constantes para a classe Pad
 // -----------------------------------------------------------------------------
+// initialReadDuration 850
+// ScaleDownAmount 2
+// tailRecordResolution 128
 #define initialHitReadDuration 850    // In microseconds. Shorter times will mean less latency, but less velocity-accuracy
 #define midiVelocityScaleDownAmount 2 // Number of halvings that will be applied to MIDI velocity
 #define tailRecordResolution 68
-
-// \/-\/-\/-\/-\/ COLOCAR AS NOTAS AQUI \/-\/-\/-\/-\/-\/
-//const uint16_t notes[NUM_PADS] = {36, 37, 38, 39, 40, 41, 42, 43, 44}; // Notas {pad1, pad2, pad3, pad4}
-const uint16_t triggerThresholds[NUM_PADS] = {350, 350, 350, 350, 350, 350, 350, 350, 350}; // Threshold iniciais {pad1, pad2, pad3, pad2}
+const uint16_t triggerThresholds[NUM_PADS] = {200, 200, 200, 200, 200}; // Threshold iniciais {pad1, pad2, pad3, pad4}
+// const uint8_t triggerThresholds[NUM_PADS] = {500,500,500,500}; // Threshold iniciais {pad1, pad2, pad3, pad4}
 
 uint32_t lastKickTime = 0;
 uint32_t kickStartTime = 0;
@@ -161,8 +138,14 @@ uint32_t kickStartTime = 0;
 boolean timeGreaterOrEqual(uint32_t lhs, uint32_t rhs) {
   return (((lhs - rhs) & 2147483648) == 0);
 }
+// -----------------------------------------------------------------------------
 
 // -----------------------------------------------------------------------------
+// Variáveis para utilizar como teste
+// -----------------------------------------------------------------------------
+// #define PIN 2
+// #define NUMLED 6
+// Adafruit_NeoPixel fitaLedTeste(NUMLED, PIN, NEO_GRB + NEO_KHZ800);
 
 // -----------------------------------------------------------------------------
 // Fitas led da Adafruit Neopixel
@@ -187,11 +170,11 @@ struct LedStripeNeoPixel ledStripe2Type1 {
 };
 struct LedStripeNeoPixel ledStripe3Type1 {
   ledPadType1,
-  new Adafruit_NeoPixel(ledPadType1.numLeds, LED_PIN_8, NEO_GRB + NEO_KHZ800)
+  new Adafruit_NeoPixel(ledPadType1.numLeds, LED_PIN_3, NEO_GRB + NEO_KHZ800)
 };
 struct LedStripeNeoPixel ledStripe4Type1 {
   ledPadType1,
-  new Adafruit_NeoPixel(ledPadType1.numLeds, LED_PIN_9, NEO_GRB + NEO_KHZ800)
+  new Adafruit_NeoPixel(ledPadType1.numLeds, LED_PIN_4, NEO_GRB + NEO_KHZ800)
 };
 
 // -----------------------------------------------------------------------------
@@ -199,16 +182,14 @@ struct LedStripeNeoPixel ledStripe4Type1 {
 // -----------------------------------------------------------------------------
 // PADS DO TIPO 2 => 2 PIEZOS + 2 FITAS LEDS 36X4
 // -----------------------------------------------------------------------------
-
 struct LedStripeNeoPixel ledStripe1Type2 {
   ledPadType2,
-  new Adafruit_NeoPixel(ledPadType2.numLeds, LED_PIN_4, NEO_GRB + NEO_KHZ800)
+  new Adafruit_NeoPixel(ledPadType2.numLeds, LED_PIN_5, NEO_GRB + NEO_KHZ800)
 };
 struct LedStripeNeoPixel ledStripe2Type2 {
   ledPadType2,
   new Adafruit_NeoPixel(ledPadType2.numLeds, LED_PIN_6, NEO_GRB + NEO_KHZ800)
 };
-
 // -----------------------------------------------------------------------------
 
 // -----------------------------------------------------------------------------
@@ -216,28 +197,28 @@ struct LedStripeNeoPixel ledStripe2Type2 {
 // -----------------------------------------------------------------------------
 struct LedStripeNeoPixel ledStripe1Type3 {
   ledPadType3,
-  new Adafruit_NeoPixel(ledPadType3.numLeds, LED_PIN_3, NEO_GRB + NEO_KHZ800)
+  new Adafruit_NeoPixel(ledPadType3.numLeds, LED_PIN_7, NEO_GRB + NEO_KHZ800)
 };
 struct LedStripeNeoPixel ledStripe2Type3 {
   ledPadType3,
-  new Adafruit_NeoPixel(ledPadType3.numLeds, LED_PIN_5, NEO_GRB + NEO_KHZ800)
+  new Adafruit_NeoPixel(ledPadType3.numLeds, LED_PIN_8, NEO_GRB + NEO_KHZ800)
 };
 struct LedStripeNeoPixel ledStripe3Type3 {
   ledPadType3,
-  new Adafruit_NeoPixel(ledPadType3.numLeds, LED_PIN_7, NEO_GRB + NEO_KHZ800)
+  new Adafruit_NeoPixel(ledPadType3.numLeds, LED_PIN_9, NEO_GRB + NEO_KHZ800)
 };
 // -----------------------------------------------------------------------------
 
 vector<LedStripeNeoPixel> ledStripes = {
   ledStripe1Type1,
   ledStripe2Type1,
-  ledStripe1Type3,
-  ledStripe1Type2,
-  ledStripe2Type3,
-  ledStripe2Type2,
-  ledStripe3Type3,
   ledStripe3Type1,
-  ledStripe4Type1
+  ledStripe4Type1,
+  ledStripe1Type2,
+  ledStripe2Type2,
+  ledStripe1Type3,
+  ledStripe2Type3,
+  ledStripe3Type3
 }; // Lista de fitas led
 
 //------------------------------------------------------------------------------
@@ -248,15 +229,32 @@ vector<LedStripeNeoPixel> ledStripes = {
 //------------------------------------------------------------------------------
 void triggerLeds(uint8_t modeId, uint8_t typePadId, uint8_t ledPadIndex, uint32_t color)
 {
-  for (int i = 0; i < ledStripes[ledPadIndex].ledPadType.numLeds; i++)
-  {
-      ledStripes[ledPadIndex].neoPixelStripe->setPixelColor(i, color); //  Set pixel's color (in RAM)
-  }
-  ledStripes[ledPadIndex].neoPixelStripe->show();                  //  Update strip to match
-  // Serial.println("--------------------------------------------");
-  // Serial.println(String(ledPadIndex));
-  // Serial.println("tipo: " + String(ledStripes[ledPadIndex].ledPadType.typeId));
-  // Serial.println("--------------------------------------------");
+// struct Stored_Matrix sm = getStoredMatrix(typePadId, modeId);
+// uint32_t colors[sm.ledPadType.numLeds];
+// ESPFlash<uint32_t> colorsStores(sm.address);
+// colorsStores.getFrontElements(colors, sm.ledPadType.numLeds);
+
+// Serial.println("Número de cores: " + String(sm.ledPadType.numLeds));
+// Serial.println("Endereço Valor no Flash: " + String(sm.address));
+// Serial.println("modeID: " + String(modeId));
+// Serial.println("Última cor: " + String(colors[sm.ledPadType.numLeds]));
+for (int i = 0; i < ledStripes[ledPadIndex].ledPadType.numLeds; i++)
+{                                  // For each pixel in strip->..
+  ledStripes[ledPadIndex].neoPixelStripe->setPixelColor(i, color); //  Set pixel's color (in RAM)
+}
+ledStripes[ledPadIndex].neoPixelStripe->show();                  //  Update strip to match
+// for (uint8_t i = 0; i < sm.ledPadType.numLeds; i++)
+// {
+//   // Serial.println("--------------------------------------------");
+//   // Serial.print("colorIndex: " + String(i+1) + " hex: " + String(colorsStores.getElementAt(i)) + " ");
+//   // Serial.println("--------------------------------------------");
+//   ledStripes[ledPadIndex].neoPixelStripe->setPixelColor(i, colors[i]);
+// }
+// ledStripes[ledPadIndex].neoPixelStripe->show();
+  Serial.println("--------------------------------------------");
+  Serial.println(String(ledPadIndex));
+  Serial.println("tipo: " + String(ledStripes[ledPadIndex].ledPadType.typeId));
+  Serial.println("--------------------------------------------");
 }
 
 // -----------------------------------------------------------------------------
@@ -264,7 +262,7 @@ void triggerLeds(uint8_t modeId, uint8_t typePadId, uint8_t ledPadIndex, uint32_
 // -----------------------------------------------------------------------------
 class Pad
 {
-public:
+  public:
   uint16_t highestYet;
   uint32_t startReadingTime;
   uint32_t highestValueTime;
@@ -280,7 +278,6 @@ public:
   uint8_t typePadId;
   uint8_t ledPadIndex;
   uint8_t padNo;
-  uint16_t defaultThreshold;
 
   Pad()
   {
@@ -294,7 +291,6 @@ public:
     padNo = _padNo;
     typePadId = _typePadId;
     ledPadIndex = _ledPadIndex;
-    defaultThreshold = triggerThresholds[_ledPadIndex];
     tailLength = 0;
     for (uint16_t i = 0; i < tailRecordResolution; i++)
     {
@@ -312,6 +308,7 @@ public:
     if (inInitialListenPhase) {
       initialListen:
       // For the next few milliseconds, look out for the highest "spike" in the reading from the piezo. Its height is representative of the hit's velocity
+      // Serial.println("--");
       // Serial.println("value " + String(value) + "highestYet: " + String(highestYet) + " salvar como highest?: " + String(value > highestYet));
       if (value > highestYet)
       {
@@ -325,20 +322,11 @@ public:
         // Serial.println("startReadingTime " + String(startReadingTime + initialHitReadDuration) + "micros(): " + String(micros()) + " timeGreaterOrEqual?: " + String(timeGreaterOrEqual(startReadingTime + initialHitReadDuration, micros())));
 
         // Send the MIDI note
-        uint8_t midiVelocity = min(127, ((highestYet >> midiVelocityScaleDownAmount) + 1));
-        uint16_t nota = notes[padNo];
-        usbMIDI.sendNoteOn(nota, midiVelocity, 1); // We add 1 onto the velocity so that the result is never 0, which would mean the same as a note-off
-        // Send the MIDI note
         Serial.println("--------------------------------------------");
-        Serial.println("Tocado padNo: " + String(padNo) + ' ' + String(analogRead(padNo)));  
+        Serial.println("Tocado padNo: " + String(padNo));  
         // Serial.println("Tocado ledPadIndex: " + String(ledPadIndex));
         // Serial.println("Tocado highestYet: " + String(highestYet));
-        Serial.println("--------------------------------------------");  
-        Serial.println("nota: " + String(nota)); // Send the unscaled velocity value to the serial monitor too, for debugging / fine-tuning
-        //Serial.println("pad: " + String((int)padNo));
-        Serial.println("velocity: " + String(highestYet)); // Send the unscaled velocity value to the serial monitor too, for debugging / fine-tuning
-        Serial.println("peak time: " + String(highestValueTime - startReadingTime)); // Send the unscaled velocity value to the serial monitor too, for debugging / fine-tuning
-
+        Serial.println("--------------------------------------------");
         triggerLeds(MODE_SOLID_PR, typePadId, ledPadIndex, colorPr);
 
         hitOccurredRecently = true;
@@ -349,7 +337,7 @@ public:
 
     else {
       // Assume the normal hit-threshold
-      uint16_t thresholdNow = defaultThreshold; // 673 os Thresholds iniciais
+      uint16_t thresholdNow = 200; //  os Thresholds iniciais
       // Serial.println("--");
       // Serial.println("thresholdNow " + String(thresholdNow) + "triggerThresholds[padNo] :" + String(triggerThresholds[padNo]));
       // Serial.println("--");
@@ -368,9 +356,6 @@ public:
           // Serial.println("msPassed >= tailLength");
           hitOccurredRecently = false; // Se o tempo que passou desde a último hit for maior que 128ms ele desliga a flag -> hitOcurredRecently
           delay(30);
-          uint8_t midiVelocity = min(127, ((highestYet >> midiVelocityScaleDownAmount) + 1));
-          uint16_t nota = notes[padNo];
-          usbMIDI.sendNoteOff(nota, midiVelocity, 1); // We add 1 onto the velocity so that the result is never 0, which would mean the same as a note-off 
           triggerLeds(MODE_SOLID_SC, typePadId, ledPadIndex, colorSc); // teste
         }
         else
@@ -411,6 +396,9 @@ public:
           }
         }
       }
+      // Serial.println("--");
+      // Serial.println("thresholdNow " + String(thresholdNow) + "value: " + String(value) + " tocada valida?: " + String(value >= thresholdNow));
+      // Serial.println("--");
       // If we've breached the threshold, it means we've got a hit!
       if (value >= thresholdNow)
       { // Se o sinal do piezo ultrapassar o threshold, tem hit
@@ -453,6 +441,10 @@ Pad pads[NUM_PADS]; // utiliza a classe "Pad" para o número de 'numPads' pads[4
 // -----------------------------------------------------------------------------
 
 // -----------------------------------------------------------------------------
+// Modos Iniciais
+// -----------------------------------------------------------------------------
+
+// -----------------------------------------------------------------------------
 // Liga os leds com a cor primária
 // -----------------------------------------------------------------------------
 void turnOnLeds(uint32_t color, uint32_t timeDelay) {
@@ -470,72 +462,103 @@ void turnOnLeds(uint32_t color, uint32_t timeDelay) {
 // -----------------------------------------------------------------------------
 // Alterar modo de cores
 // -----------------------------------------------------------------------------
-void changeColors(char colorMode) {
+void changeColorMode1(uint32_t modeSwitcher) {
+  int16_t j=0, i=0;
+  for (i = 0; i <= modeSwitcher; i += (1023 / 8)) {
+    j++;
+    colorMode = j;
+  }
   switch(colorMode) {
-    case '0': 
+    case 1: 
+      colorPr = verde;
+      colorSc = vermelho;
       break;
-    case '1':
-      colorPr = colors[0];
-      break;
-    case '2':
-      colorPr = colors[1];
-      break;
-    case '3':
-      colorPr = colors[2];
-      break;
-    case '4':
-      colorPr = colors[3];
-      break;
-    case '5':
-      colorPr = colors[4];
-      break;
-    case '6':
-      colorPr = colors[5];
-      break;
-    case '7':
-      colorPr = colors[6];
-      break;
-    case '8':
-      colorPr = colors[7];
-      break;
-    case '9':
-      colorPr = colors[8];
-      break;
-    case 'A':
-      turnOff(); 
-      break;
-    case 'B':
-      randomEffectMijoDoCachorroAlado();
-      break;
-    case 'C':
+    case 2:
       colorPr = laranja;
-      turnOnLeds(colorSc, 0);
+      colorSc = azul;
       break;
-    case 'D':
-      setBrightness();
+    case 3:
+      colorPr = azulClaro;
+      colorSc = amarelo;
       break;
-    case '*':
-      changeSecondaryColor();
-      turnOnLeds(colorSc, 0);
+    case 4:
+      colorPr = laranja;
+      colorSc = rosaEscuro;
       break;
-    case '#':
+    case 5:
+      colorPr = azul;
+      colorSc = vermelho;
+      break;
+    case 6:
+      colorPr = rosaEscuro;
+      colorSc = azul;
+      break;
+    case 7:
+      colorPr = roxo;
+      colorSc = amarelo;
+      break;
+    case 8:
+      colorPr = verde;
+      colorSc = rosaEscuro;
       break;
     default:
+      colorPr = verde;
+      colorSc = vermelho;
       break;
   }
+  turnOnLeds(colorSc, 100);
+}
+
+void changeColorMode2(uint32_t modeSwitcher) {
+  uint16_t j=8, i=0;
+  for (i = 0; i <= modeSwitcher; i += 127) {
+    j++;
+    colorMode = j;
+  }
+  switch(colorMode) {
+    case 9:
+      colorPr = vermelho;
+      colorSc = verde;
+      break;
+    case 10:
+      colorPr = azulClaro;
+      colorSc = roxo;
+      break;
+    case 11:
+      colorPr = rosaEscuro;
+      colorSc = azulClaro;
+      break;
+    case 12:
+      colorPr = azul;
+      colorSc = laranja;
+      break;
+    case 13:
+      colorPr = laranja;
+      colorSc = verde;
+      break;
+    case 14:
+      colorPr = amarelo;
+      colorSc = roxo;
+      break;
+    case 15:
+      colorPr = laranja;
+      colorSc = azulClaro;
+      break;
+    case 16:
+      colorPr = rosaEscuro;
+      colorSc = laranja;
+      break;
+    default:
+      colorPr = vermelho;
+      colorSc = verde;
+      break;
+  }
+  turnOnLeds(colorSc, 100);
 }
 // -----------------------------------------------------------------------------
 
-// -----------------------------------------------------------------------------
-// Modos Iniciais
-// -----------------------------------------------------------------------------
 
 // -----------------------------------------------------------------------------
-// Liga os leds com a cor primária
-// Liga os leds com a cor secundária
-// Liga os leds com a cor primária
-// -----------------------------------------------------------------------------
-
 // Liga os leds com a cor primária
 // Liga os leds com a cor secundária
 // Liga os leds com a cor primária
@@ -552,65 +575,8 @@ void turnOnLedsModePrSc(uint32_t firstDelay, uint32_t secondDelay) {
   }
   turnOnLeds(colorPr, 0);
   turnOnLeds(colorSc, 200);
+  turnOnLeds(colorPr, 200);
 }
-
-// -----------------------------------------------------------------------------
-// EFEITOS
-// -----------------------------------------------------------------------------
-void turnOff() {
-  turnOnLeds(offColor, 0);
-}
-
-void setBrightness() {
-  padBrightness -= 25;
-  if(padBrightness < 0) { 
-    padBrightness = 255;
-  }
-  for (uint16_t i = 0; i < NUM_PADS; i++)
-  {
-    ledStripes[i].neoPixelStripe->setBrightness(padBrightness);
-    ledStripes[i].neoPixelStripe->show();
-  }
-  Serial.println("Alterando Brightness: " + String(padBrightness));
-}
-
-void changeSecondaryColor() {
-  colorsIndex += 1;
-  
-  if(colorsIndex > (colorsSize - 1)) {
-    colorsIndex = 0;
-  }
-  colorSc = colors[colorsIndex];
-}
-
-void randomEffectMijoDoCachorroAlado(){
-  uint32_t ultimaCor = vermelho;
-  if(colorPr == vermelho) {
-    ultimaCor = roxo; 
-  }
-  turnOnLeds(rosaEscuro,150);
-  turnOnLeds(verde, 150);
-  turnOnLeds(ultimaCor, 150);
-  turnOnLeds(colorPr, 150);
-}
-
-// -----------------------------------------------------------------------------
-// KEYBOARD Simples
-// -----------------------------------------------------------------------------
-const byte ROWS = 4; //four rows
-const byte COLS = 4; //four columns
-
-char keys[ROWS][COLS] = {
-  {'1','2','3','A'},
-  {'4','5','6','B'},
-  {'7','8','9','C'},
-  {'*','0','#','D'}
-};
-
-byte rowPins[ROWS] = {KEYPAD_PIN_8, KEYPAD_PIN_7, KEYPAD_PIN_6, KEYPAD_PIN_5}; //connect to the row pinouts of the keypad
-byte colPins[COLS] = {KEYPAD_PIN_4, KEYPAD_PIN_3, KEYPAD_PIN_2, KEYPAD_PIN_1}; //connect to the column pinouts of the k
-
-Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 
 // -----------------------------------------------------------------------------
 // Configurações de inicialização do ESP
@@ -620,57 +586,67 @@ void setup()
   Serial.begin(115200);
   Serial.println("Iniciando o projeto");
   analogReadResolution(10);
-  pinMode(PIEZO_PIN_1, INPUT);
-  pinMode(PIEZO_PIN_2, INPUT);
-  pinMode(PIEZO_PIN_3, INPUT);
-  pinMode(PIEZO_PIN_4, INPUT);
-  pinMode(PIEZO_PIN_5, INPUT);
-  pinMode(PIEZO_PIN_6, INPUT);
-  pinMode(PIEZO_PIN_7, INPUT);
-  pinMode(PIEZO_PIN_8, INPUT);
-  pinMode(PIEZO_PIN_9, INPUT);
-
-  pinMode(KEYPAD_PIN_1, INPUT);
-  pinMode(KEYPAD_PIN_2, INPUT);
-  pinMode(KEYPAD_PIN_3, INPUT);
-  pinMode(KEYPAD_PIN_4, INPUT);
-  pinMode(KEYPAD_PIN_5, INPUT);
-  pinMode(KEYPAD_PIN_6, INPUT);
-  pinMode(KEYPAD_PIN_7, INPUT);
-  pinMode(KEYPAD_PIN_8, INPUT);
+  pinMode(12, INPUT);
+  pinMode(39, INPUT);
+  pinMode(34, INPUT);
+  pinMode(35, INPUT);
+  pinMode(32, INPUT);
+  pinMode(33, INPUT);
+  pinMode(25, INPUT);
+  pinMode(26, INPUT);
+  pinMode(27, INPUT);
+  pinMode(14, INPUT);
   
-  pinMode(LED_PIN_1, OUTPUT);
-  pinMode(LED_PIN_2, OUTPUT);
-  pinMode(LED_PIN_3, OUTPUT);
-  pinMode(LED_PIN_4, OUTPUT);
-  pinMode(LED_PIN_5, OUTPUT);
-  pinMode(LED_PIN_6, OUTPUT);
-  pinMode(LED_PIN_7, OUTPUT);
-  pinMode(LED_PIN_8, OUTPUT);
-  pinMode(LED_PIN_9, OUTPUT);
-
+  for (uint8_t i = 0; i < NUM_PADS; i++)
+  {
+    ledStripes[i].neoPixelStripe->setBrightness(190);
+  }
   Serial.println("--------------------------------------------------------------");
   Serial.println("triggerThresholds: " + String(triggerThresholds[0]) + " " + String(triggerThresholds[1]));
   Serial.println("--------------------------------------------------------------");
   // Biblioteca de Cores
   turnOnLedsModePrSc(200, 200);
+
+  Serial.println("--------------------------------------------------------------");
+  Serial.printf("biggest free block: %i\n", heap_caps_get_largest_free_block(MALLOC_CAP_8BIT));
   Serial.println("--------------------------------------------------------------");
 }
 
 // -----------------------------------------------------------------------------
+// Potenciometros para alteraçao de modo de cores (16 cores 8 em cada potenciometro)
+// -----------------------------------------------------------------------------
+int32_t potColorMode1 = 0;
+int32_t potColorMode2 = 0;
+int32_t potBrightness = 0;
+int16_t safetyRange = 75;
+// int16_t safetyRangeBrightness = 20;
+
+// -----------------------------------------------------------------------------
 // Loop principal do ESP
 // -----------------------------------------------------------------------------
-
-void loop() { 
+void loop()
+{
+  int16_t switcherMode1 = analogRead(12);
+  //int16_t switcherMode2 = analogRead(27);
+  // int16_t switchBrightness = analogRead(26);
   for (uint8_t i = 0; i < NUM_PADS; i++)
   {
     pads[i].tick();
   }
 
-  char key = keypad.getKey();// Read the key
-  if (key){
-    Serial.print("Key Pressed : ");
-    Serial.println(key);
-    changeColors(key);
+  Serial.println("Piezo 1: pin 39 => " + String(analogRead(39)));
+  Serial.println("Piezo 2: pin 34 => " + String(analogRead(34)));
+  Serial.println("Piezo 3: pin 35 => " + String(analogRead(35)));
+  Serial.println("Piezo 4: pin 32 => " + String(analogRead(32)));
+  Serial.println("Piezo 5: pin 33 => " + String(analogRead(33)));
+  Serial.println("Piezo 6: pin 25 => " + String(analogRead(25)));
+  Serial.println("Piezo 7: pin 26 => " + String(analogRead(26)));
+  Serial.println("Piezo 8: pin 27 => " + String(analogRead(27)));
+  Serial.println("Piezo 9: pin 14 => " + String(analogRead(14))); // PULLUP
+//  delay(2000);
+  if ((potColorMode1 < (switcherMode1 - safetyRange)) || (potColorMode1 > (switcherMode1 + safetyRange))) {
+    Serial.println("Potenciometro 1: " + String(switcherMode1));
+    potColorMode1 = switcherMode1;
+    changeColorMode1(potColorMode1);
   }
-}
+} 

@@ -4,6 +4,7 @@
 #include <Keypad.h>
 #include <map>
 #include <vector>
+#include <TeensyThreads.h> 
 
 #define NUM_PADS 9
 
@@ -68,17 +69,16 @@ uint8_t padBrightness = 255;
 uint32_t vermelho = 0xFF0000;
 uint32_t roxo = 0x800080;
 uint32_t rosaEscuro = 0xD80213;
-uint32_t laranja = 0x910b00;
-uint32_t amarelo = 0xff6400;
-uint32_t amareloEscuro = 0xFFD700;
 uint32_t amareloClaro = 0xFF4500;
+uint32_t laranja = 0x910b00;
 uint32_t verdeClaro = 0x7FFF00;
+uint32_t amareloEscuro = 0xFFD700;
 uint32_t verde = 0x00FF00;
 uint32_t azulClaro = 0x007AA3;
 uint32_t azul = 0x0000FF;
 uint32_t branco = 0xFFFFFF;
 
-const uint32_t colors[11] = { vermelho, azulClaro, rosaEscuro, verde, azul, amarelo, amareloEscuro, amareloClaro, roxo, laranja, branco }; // Threshold iniciais {pad1, pad2, pad3, pad2}
+const uint32_t colors[11] = { vermelho, azulClaro, amareloClaro, rosaEscuro, verde', azul, amareloEscuro, roxo, laranja, branco }; // Threshold iniciais {pad1, pad2, pad3, pad2}
 const int colorsSize = *(&colors + 1) - colors; 
 uint8_t colorsIndex = 0;
 
@@ -147,9 +147,9 @@ std::map<char, char> notes = {
 // -----------------------------------------------------------------------------
 // Declaração de variáveis e constantes para a classe Padf
 // -----------------------------------------------------------------------------
-#define initialHitReadDuration 850    // In microseconds. Shorter times will mean less latency, but less velocity-accuracy
-#define midiVelocityScaleDownAmount 2 // Number of halvings that will be applied to MIDI velocity
+#define initialHitReadDuration 400 // In microseconds. Shorter times will mean less latency, but less velocity-accuracy
 #define tailRecordResolution 68
+#define midiVelocityScaleDownAmount 2 // Number of halvings that will be applied to MIDI velocity
 
 // \/-\/-\/-\/-\/ COLOCAR AS NOTAS AQUI \/-\/-\/-\/-\/-\/
 //const uint16_t notes[NUM_PADS] = {36, 37, 38, 39, 40, 41, 42, 43, 44}; // Notas {pad1, pad2, pad3, pad4}
@@ -367,7 +367,6 @@ public:
         {
           // Serial.println("msPassed >= tailLength");
           hitOccurredRecently = false; // Se o tempo que passou desde a último hit for maior que 128ms ele desliga a flag -> hitOcurredRecently
-          delay(30);
           uint8_t midiVelocity = min(127, ((highestYet >> midiVelocityScaleDownAmount) + 1));
           uint16_t nota = notes[padNo];
           usbMIDI.sendNoteOff(nota, midiVelocity, 1); // We add 1 onto the velocity so that the result is never 0, which would mean the same as a note-off 
@@ -400,7 +399,6 @@ public:
               // Serial.println("modo: 1");
               // Serial.println("--------------------------------------------");
               previousHitStillRecent = false;               // Se o gap entre o ultimo hit for maior que 128ms, desliga a flag -> "previousHitStillRecent"
-              // delay(30);
               // triggerLeds(MODE_SOLID_SC, typePadId, ledPadIndex, colorSc);
             }
             else
@@ -460,7 +458,6 @@ void turnOnLeds(uint32_t color, uint32_t timeDelay) {
   Serial.println("triggerThresholds: " + String(triggerThresholds[0]) + " " + String(triggerThresholds[1]));
   Serial.println("--------------------------------------------------------------");
   delay(timeDelay);
-
   for (uint16_t i = 0; i < NUM_PADS; i++)
   {
     triggerLeds(MODE_SOLID_PR, ledStripes[i].ledPadType.typeId, i, color);
@@ -591,7 +588,7 @@ void randomEffectMijoDoCachorroAlado(){
   turnOnLeds(rosaEscuro,150);
   turnOnLeds(verde, 150);
   turnOnLeds(ultimaCor, 150);
-  turnOnLeds(colorPr, 150);
+  turnOnLeds(colorSc, 150);
 }
 
 // -----------------------------------------------------------------------------
@@ -607,8 +604,8 @@ char keys[ROWS][COLS] = {
   {'*','0','#','D'}
 };
 
-byte rowPins[ROWS] = {KEYPAD_PIN_8, KEYPAD_PIN_7, KEYPAD_PIN_6, KEYPAD_PIN_5}; //connect to the row pinouts of the keypad
-byte colPins[COLS] = {KEYPAD_PIN_4, KEYPAD_PIN_3, KEYPAD_PIN_2, KEYPAD_PIN_1}; //connect to the column pinouts of the k
+byte rowPins[ROWS] = { KEYPAD_PIN_5, KEYPAD_PIN_6, KEYPAD_PIN_7, KEYPAD_PIN_8 }; //connect to the row pinouts of the keypad
+byte colPins[COLS] = { KEYPAD_PIN_1, KEYPAD_PIN_2, KEYPAD_PIN_3, KEYPAD_PIN_4 }; //connect to the column pinouts of the k
 
 Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 
@@ -630,15 +627,15 @@ void setup()
   pinMode(PIEZO_PIN_8, INPUT);
   pinMode(PIEZO_PIN_9, INPUT);
 
-  pinMode(KEYPAD_PIN_1, INPUT);
-  pinMode(KEYPAD_PIN_2, INPUT);
-  pinMode(KEYPAD_PIN_3, INPUT);
-  pinMode(KEYPAD_PIN_4, INPUT);
-  pinMode(KEYPAD_PIN_5, INPUT);
-  pinMode(KEYPAD_PIN_6, INPUT);
-  pinMode(KEYPAD_PIN_7, INPUT);
-  pinMode(KEYPAD_PIN_8, INPUT);
-  
+  pinMode(KEYPAD_PIN_1, INPUT_PULLUP);
+  pinMode(KEYPAD_PIN_2, INPUT_PULLUP);
+  pinMode(KEYPAD_PIN_3, INPUT_PULLUP);
+  pinMode(KEYPAD_PIN_4, INPUT_PULLUP);
+  pinMode(KEYPAD_PIN_5, INPUT_PULLUP);
+  pinMode(KEYPAD_PIN_6, INPUT_PULLUP);
+  pinMode(KEYPAD_PIN_7, INPUT_PULLUP);
+  pinMode(KEYPAD_PIN_8, INPUT_PULLUP);
+ 
   pinMode(LED_PIN_1, OUTPUT);
   pinMode(LED_PIN_2, OUTPUT);
   pinMode(LED_PIN_3, OUTPUT);
@@ -655,6 +652,8 @@ void setup()
   // Biblioteca de Cores
   turnOnLedsModePrSc(200, 200);
   Serial.println("--------------------------------------------------------------");
+  //threads.addThread(thread_pads_func);
+  //threads.addThread(thread_keyboard_func);
 }
 
 // -----------------------------------------------------------------------------
@@ -666,7 +665,23 @@ void loop() {
   {
     pads[i].tick();
   }
+  
+  char key = keypad.getKey();// Read the key
+  if (key){
+    Serial.print("Key Pressed : ");
+    Serial.println(key);
+    changeColors(key);
+  }
+}
 
+void thread_pads_func() {
+  for (uint8_t i = 0; i < NUM_PADS; i++)
+  {
+    pads[i].tick();
+  }
+}
+
+void thread_keyboard_func() {
   char key = keypad.getKey();// Read the key
   if (key){
     Serial.print("Key Pressed : ");

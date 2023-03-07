@@ -1,13 +1,13 @@
-      #include <Arduino.h>
-      #include <SPIFFS.h>
-      #include <ESPFlash.h>
-      #include <EEPROM.h>
-      #include <Adafruit_NeoPixel.h>
-      #include <Led_Matrix.h>
-      #include <vector>
-      
-      #define NUM_PADS 9
-      
+        #include <Arduino.h>
+        #include <SPIFFS.h>
+        #include <ESPFlash.h>
+        #include <EEPROM.h>
+        #include <Adafruit_NeoPixel.h>
+        #include <Led_Matrix.h>
+        #include <vector>
+        
+        #define NUM_PADS 9
+
       // -----------------------------------------------------------------------------
       // Pinos utilizados como Saída para os Leds dos Pads
       // -----------------------------------------------------------------------------
@@ -43,26 +43,21 @@
       #define PIEZO_PIN_7 26
       #define PIEZO_PIN_8 27
       #define PIEZO_PIN_9 14
-
-      // Somente entrada 34, 35, 36, 39
-      // Pinos sem Pull UP 13, 25, 26, 27, 32 e 33
-      // Pinos com Pull UP 14, 16, 17, 18, 19, 21, 22 e 23
-      // Pinos ADC_1 32, 33, 34, 36, 37, 38, 39
-      // Pinos ADC_2 0, 2, 4, 12, 13, 14, 15, 25, 26, 27
+ 
       // -----------------------------------------------------------------------------
       // Cores disponíveis para os LEDS
       // -----------------------------------------------------------------------------
       
       uint8_t colorMode = 0;
       
-      uint32_t vermelho = 0xFF0000; // ok
-      uint32_t roxo = 0xb400ff; // a311a6
+      uint32_t vermelho =   0xFF0000; // ok
+      uint32_t roxo =       0xb400ff; // a311a6
       uint32_t rosaEscuro = 0xD80213; // ok
-      uint32_t laranja = 0x910b00; // ok
-      uint32_t amarelo = 0xff6400;
-      uint32_t verde = 0x00FF00; // ok
-      uint32_t azulClaro = 0x007AA3; // ok
-      uint32_t azul = 0x0000FF; // ok
+      uint32_t laranja =    0x910b00; // ok
+      uint32_t amarelo =    0xff6400;
+      uint32_t verde =      0x00FF00; // ok
+      uint32_t azulClaro =  0x007AA3; // ok
+      uint32_t azul =       0x0000FF; // ok
 
       uint32_t colorPr = vermelho; // Cor Primaria
       uint32_t colorSc = verde; // Cor Secundaria
@@ -75,10 +70,6 @@
         PIEZO_PIN_3,
         PIEZO_PIN_4,
         PIEZO_PIN_5,
-        PIEZO_PIN_6,
-        PIEZO_PIN_7,
-        PIEZO_PIN_8,
-        PIEZO_PIN_9
       };
 
       enum Pad_Type {
@@ -109,13 +100,26 @@
       struct Led_Pad_Type ledPadType2 = { PAD_TYPE_2, 45, 4, 144, colorPr, colorSc };
       struct Led_Pad_Type ledPadType3 = { PAD_TYPE_3, 45, 4, 180, colorPr, colorSc };
 
+      // Pad em armazenamento
+      // Tipo 2 => 36x4
+      // Tipo 3 => 45X4
+      struct Stored_Matrix {
+        Led_Pad_Type ledPadType;
+        uint8_t modo;
+        char address[7];
+      };
+
       // -----------------------------------------------------------------------------
       // Declaração de variáveis e constantes para a classe Pad
       // -----------------------------------------------------------------------------
+      // initialReadDuration 850
+      // ScaleDownAmount 2
+      // tailRecordResolution 128
       #define initialHitReadDuration 850    // In microseconds. Shorter times will mean less latency, but less velocity-accuracy
       #define midiVelocityScaleDownAmount 2 // Number of halvings that will be applied to MIDI velocity
       #define tailRecordResolution 68
-      const uint16_t triggerThresholds[NUM_PADS] = {700, 700, 700, 700, 700}; // Threshold iniciais {pad1, pad2, pad3, pad4}
+      const uint16_t triggerThresholds[NUM_PADS] = {500, 500, 500, 500, 500, 500, 500, 500, 500}; // Threshold iniciais {pad1, pad2, pad3, pad4}
+      // const uint8_t triggerThresholds[NUM_PADS] = {500,500,500,500}; // Threshold iniciais {pad1, pad2, pad3, pad4}
 
       uint32_t lastKickTime = 0;
       uint32_t kickStartTime = 0;
@@ -143,7 +147,7 @@
         Adafruit_NeoPixel *neoPixelStripe;
       };
 
-      // -----------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------
       // PADS DO TIPO 1 => 4 PIEZOS + 4 FITAS LEDS 27X4
       // -----------------------------------------------------------------------------
       struct LedStripeNeoPixel ledStripe1Type1 {
@@ -201,9 +205,9 @@
       vector<LedStripeNeoPixel> ledStripes = {
         ledStripe1Type1,
         ledStripe2Type1,
-        ledStripe1Type3,
-        ledStripe2Type3,
-        ledStripe3Type3
+        ledStripe1Type2,
+        ledStripe2Type2,
+        ledStripe1Type3
       }; // Lista de fitas led
 
       //------------------------------------------------------------------------------
@@ -214,11 +218,28 @@
       //------------------------------------------------------------------------------
       void triggerLeds(uint8_t modeId, uint8_t typePadId, uint8_t ledPadIndex, uint32_t color)
       {
+        // struct Stored_Matrix sm = getStoredMatrix(typePadId, modeId);
+        // uint32_t colors[sm.ledPadType.numLeds];
+        // ESPFlash<uint32_t> colorsStores(sm.address);
+        // colorsStores.getFrontElements(colors, sm.ledPadType.numLeds);
+
+        // Serial.println("Número de cores: " + String(sm.ledPadType.numLeds));
+        // Serial.println("Endereço Valor no Flash: " + String(sm.address));
+        // Serial.println("modeID: " + String(modeId));
+        // Serial.println("Última cor: " + String(colors[sm.ledPadType.numLeds]));
         for (int i = 0; i < ledStripes[ledPadIndex].ledPadType.numLeds; i++)
         {                                  // For each pixel in strip->..
             ledStripes[ledPadIndex].neoPixelStripe->setPixelColor(i, color); //  Set pixel's color (in RAM)
         }
         ledStripes[ledPadIndex].neoPixelStripe->show();                  //  Update strip to match
+        // for (uint8_t i = 0; i < sm.ledPadType.numLeds; i++)
+        // {
+        //   // Serial.println("--------------------------------------------");
+        //   // Serial.print("colorIndex: " + String(i+1) + " hex: " + String(colorsStores.getElementAt(i)) + " ");
+        //   // Serial.println("--------------------------------------------");
+        //   ledStripes[ledPadIndex].neoPixelStripe->setPixelColor(i, colors[i]);
+        // }
+        // ledStripes[ledPadIndex].neoPixelStripe->show();
         Serial.println("--------------------------------------------");
         Serial.println(String(ledPadIndex));
         Serial.println("tipo: " + String(ledStripes[ledPadIndex].ledPadType.typeId));
@@ -409,6 +430,10 @@
       // -----------------------------------------------------------------------------
 
       // -----------------------------------------------------------------------------
+      // Modos Iniciais
+      // -----------------------------------------------------------------------------
+
+      // -----------------------------------------------------------------------------
       // Liga os leds com a cor primária
       // -----------------------------------------------------------------------------
       void turnOnLeds(uint32_t color, uint32_t timeDelay) {
@@ -426,9 +451,9 @@
       // -----------------------------------------------------------------------------
       // Alterar modo de cores
       // -----------------------------------------------------------------------------
-      void changeColorMode1(uint32_t modeSwiper) {
+      void changeColorMode1(uint32_t modeSwitcher) {
         int16_t j=0, i=0;
-        for (i = 0; i <= modeSwiper; i += 127) {
+        for (i = 0; i <= modeSwitcher; i += (1023 / 8)) {
           j++;
           colorMode = j;
         }
@@ -461,7 +486,8 @@
             colorPr = roxo;
             colorSc = amarelo;
             break;
-          case 8:            colorPr = verde;
+          case 8:
+            colorPr = verde;
             colorSc = rosaEscuro;
             break;
           default:
@@ -472,9 +498,9 @@
         turnOnLeds(colorSc, 100);
       }
 
-      void changeColorMode2(uint32_t modeSwiper) {
+      void changeColorMode2(uint32_t modeSwitcher) {
         uint16_t j=8, i=0;
-        for (i = 0; i <= modeSwiper; i += (1023 / 8)) {
+        for (i = 0; i <= modeSwitcher; i += 127) {
           j++;
           colorMode = j;
         }
@@ -520,9 +546,6 @@
       }
       // -----------------------------------------------------------------------------
       
-      // -----------------------------------------------------------------------------
-      // Modos Iniciais
-      // -----------------------------------------------------------------------------
 
       // -----------------------------------------------------------------------------
       // Liga os leds com a cor primária
@@ -553,17 +576,6 @@
         Serial.println("Iniciando o projeto");
         analogReadResolution(10);
         pinMode(14, INPUT);
-        pinMode(27, INPUT);
-        pinMode(PIEZO_PIN_1, OUTPUT);
-        pinMode(PIEZO_PIN_2, OUTPUT);
-        pinMode(PIEZO_PIN_3, OUTPUT);
-        pinMode(PIEZO_PIN_4, OUTPUT);
-        pinMode(PIEZO_PIN_5, OUTPUT);
-        pinMode(LED_PIN_1, INPUT);
-        pinMode(LED_PIN_2, INPUT);
-        pinMode(LED_PIN_3, INPUT);
-        pinMode(LED_PIN_4, INPUT);
-        pinMode(LED_PIN_5, INPUT);
         for (uint8_t i = 0; i < NUM_PADS; i++)
         {
           ledStripes[i].neoPixelStripe->setBrightness(190);
@@ -583,10 +595,9 @@
       // -----------------------------------------------------------------------------
       int32_t potColorMode1 = 0;
       int32_t potColorMode2 = 0;
-      int32_t potBrightness = 273;
-
+      int32_t potBrightness = 0;
       int16_t safetyRange = 75;
-      int16_t safetyRangeBrightness = 20;
+      // int16_t safetyRangeBrightness = 20;
       // -----------------------------------------------------------------------------
       // Loop principal do ESP
       // -----------------------------------------------------------------------------
@@ -594,7 +605,7 @@
       {
         int16_t switcherMode1 = analogRead(14);
         int16_t switcherMode2 = analogRead(27);
-        int16_t switchBrightness = analogRead(26);
+        // int16_t switchBrightness = analogRead(26);
         for (uint8_t i = 0; i < NUM_PADS; i++)
         {
           pads[i].tick();

@@ -368,6 +368,8 @@ void triggerLeds(uint8_t ledPadIndex, uint32_t color)
   }
   ledStripes[ledPadIndex].show();                  //  Update strip to match
 }
+uint8_t colorsIndex = 0;
+const uint16_t colorsSize = *(&colorsArr + 1) - colorsArr; 
 
 void mode_1() {
   std::map<std::string, uint32_t>::iterator it;
@@ -383,18 +385,38 @@ void mode_1() {
 
 void mode_2() {
   std::map<std::string, uint32_t>::iterator it;
-
+  Serial.println("Mode 2");
   for (it = colors.begin(); it != colors.end(); it++)
   {
       for(int i = 0; i < NUM_PADS; i++) {
         triggerLeds(i, it->second);
+      Serial.println(String(it->second));
       }
+      
       for(int i = 0; i < NUM_PADS; i++) {
         triggerLeds(i, 0xFFE42D);
       }
       delay(1000);
   }
 }
+
+void mode_4() {
+  Serial.println("Mode 4");
+  
+  for (uint16_t i=0;i <= colorsSize; i++)
+  {
+      for(int i = 0; i < NUM_PADS; i++) {
+        triggerLeds(i, colorsArr[i]);
+      Serial.println(String(colorsArr[i]));
+      }
+      
+      for(int i = 0; i < NUM_PADS; i++) {
+        triggerLeds(i, 0xFFE42D);
+      }
+      delay(1000);
+  }
+}
+
 
 void mode_3() {
   std::map<std::string, uint32_t>::iterator it;
@@ -407,9 +429,6 @@ void mode_3() {
       delay(5000);
   }
 }
-
-uint8_t colorsIndex = 0;
-const int colorsSize = *(&colorsArr + 1) - colorsArr; 
 
 void mode_keyboard(char key) {
   if(key == "A") {
@@ -454,7 +473,9 @@ void changeAllColors(uint32_t color) {
 }
 
 void setup() {
-
+Serial.begin(115200);
+  Serial.println("Iniciando o projeto");
+  analogReadResolution(10);
   pinMode(KEYPAD_PIN_1, INPUT);
   pinMode(KEYPAD_PIN_2, INPUT);
   pinMode(KEYPAD_PIN_3, INPUT);
@@ -496,11 +517,12 @@ void setup() {
 void loop() {
   //mode_1(); // Sem backlight
 
-  char key = keypad.getKey();// Read the key
-  if (key){
-    mode_keyboard(key);
-  }
-  // mode_2() // Com backlight
+  // char key = keypad.getKey();// Read the key
+  // if (key){
+  //   mode_keyboard(key);
+  // }
+  Serial.println("loop");
+  mode_4(); // Com backlight
 
   // mode_3() // lento
 }

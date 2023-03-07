@@ -1,5 +1,4 @@
         #include <Arduino.h>
-        #include <SPIFFS.h>
         #include <ESPFlash.h>
         #include <EEPROM.h>
         #include <Adafruit_NeoPixel.h>
@@ -552,7 +551,6 @@
         Serial.println("Iniciando o projeto");
         analogReadResolution(10);
         pinMode(14, INPUT);
-        pinMode(27, INPUT);
         for (uint8_t i = 0; i < NUM_PADS; i++)
         {
           ledStripes[i].neoPixelStripe->setBrightness(190);
@@ -592,17 +590,4 @@
           potColorMode1 = switcherMode1;
           changeColorMode1(potColorMode1);
         }
-        if ((potColorMode2 < (switcherMode2 - safetyRange)) || (potColorMode2 > (switcherMode2 + safetyRange))) {
-          Serial.println("Potenciometro 2: " + String(switcherMode2));
-          potColorMode2 = switcherMode2;
-          changeColorMode2(potColorMode2);
-        }
-        // if ((potBrightness < (switchBrightness - safetyRangeBrightness)) || (potBrightness > (switchBrightness - safetyRangeBrightness))) {
-        //   Serial.println("Potenciometro Luminosidade: " + String(switchBrightness));
-        //   potBrightness = switchBrightness;
-        //   for (uint8_t i = 0; i < NUM_PADS; i++)
-        //   {
-        //     ledStripes[i].neoPixelStripe->setBrightness(0.2492*potBrightness);
-        // } 
-        // }
       }
