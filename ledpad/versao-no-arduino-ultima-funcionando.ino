@@ -2,11 +2,10 @@
 #include <Adafruit_NeoPixel.h>
 #include <Led_Matrix.h>
 #include <Keypad.h>
-#include <FreqMeasure.h>
 #include <map>
 #include <vector>
-#include <TeensyThreads.h>
- 
+#include <TeensyThreads.h> 
+
 #define NUM_PADS 9
 
 // -----------------------------------------------------------------------------
@@ -70,17 +69,17 @@ uint8_t padBrightness = 255;
 uint32_t vermelho = 0xFF0000;
 uint32_t roxo = 0x800080;
 uint32_t rosaEscuro = 0xD80213;
+uint32_t amareloClaro = 0xFF4500;
 uint32_t laranja = 0x910b00;
 uint32_t amarelo = 0xff6400;
-uint32_t amareloEscuro = 0xFFD700;
-uint32_t amareloClaro = 0xFF4500;
 uint32_t verdeClaro = 0x7FFF00;
+uint32_t amareloEscuro = 0xFFD700;
 uint32_t verde = 0x00FF00;
 uint32_t azulClaro = 0x007AA3;
 uint32_t azul = 0x0000FF;
 uint32_t branco = 0xFFFFFF;
 
-const uint32_t colors[11] = { vermelho, azulClaro, rosaEscuro, verde, azul, amarelo, amareloEscuro, amareloClaro, roxo, laranja, branco }; // Threshold iniciais {pad1, pad2, pad3, pad2}
+const uint32_t colors[11] = { vermelho, azulClaro, amareloClaro, rosaEscuro, verde, amarelo, azul, amareloEscuro, roxo, laranja, branco }; // Threshold iniciais {pad1, pad2, pad3, pad2}
 const int colorsSize = *(&colors + 1) - colors; 
 uint8_t colorsIndex = 0;
 
@@ -149,9 +148,9 @@ std::map<char, char> notes = {
 // -----------------------------------------------------------------------------
 // Declaração de variáveis e constantes para a classe Padf
 // -----------------------------------------------------------------------------
-#define initialHitReadDuration 850    // In microseconds. Shorter times will mean less latency, but less velocity-accuracy
-#define midiVelocityScaleDownAmount 2 // Number of halvings that will be applied to MIDI velocity
+#define initialHitReadDuration 100 // In microseconds. Shorter times will mean less latency, but less velocity-accuracy
 #define tailRecordResolution 68
+#define midiVelocityScaleDownAmount 16 // Number of halvings that will be applied to MIDI velocity
 
 // \/-\/-\/-\/-\/ COLOCAR AS NOTAS AQUI \/-\/-\/-\/-\/-\/
 //const uint16_t notes[NUM_PADS] = {36, 37, 38, 39, 40, 41, 42, 43, 44}; // Notas {pad1, pad2, pad3, pad4}
@@ -331,15 +330,15 @@ public:
         uint16_t nota = notes[padNo];
         usbMIDI.sendNoteOn(nota, midiVelocity, 1); // We add 1 onto the velocity so that the result is never 0, which would mean the same as a note-off
         // Send the MIDI note
-        // Serial.println("--------------------------------------------");
+        Serial.println("--------------------------------------------");
         Serial.println("Tocado padNo: " + String(padNo) + ' ' + String(analogRead(padNo)));  
         // Serial.println("Tocado ledPadIndex: " + String(ledPadIndex));
         // Serial.println("Tocado highestYet: " + String(highestYet));
-        // Serial.println("--------------------------------------------");  
-        // Serial.println("nota: " + String(nota)); // Send the unscaled velocity value to the serial monitor too, for debugging / fine-tuning
+        Serial.println("--------------------------------------------");  
+        Serial.println("nota: " + String(nota)); // Send the unscaled velocity value to the serial monitor too, for debugging / fine-tuning
         //Serial.println("pad: " + String((int)padNo));
-        // Serial.println("velocity: " + String(highestYet)); // Send the unscaled velocity value to the serial monitor too, for debugging / fine-tuning
-        // Serial.println("peak time: " + String(highestValueTime - startReadingTime)); // Send the unscaled velocity value to the serial monitor too, for debugging / fine-tuning
+        Serial.println("velocity: " + String(highestYet)); // Send the unscaled velocity value to the serial monitor too, for debugging / fine-tuning
+        Serial.println("peak time: " + String(highestValueTime - startReadingTime)); // Send the unscaled velocity value to the serial monitor too, for debugging / fine-tuning
 
         triggerLeds(MODE_SOLID_PR, typePadId, ledPadIndex, colorPr);
 
@@ -369,7 +368,6 @@ public:
         {
           // Serial.println("msPassed >= tailLength");
           hitOccurredRecently = false; // Se o tempo que passou desde a último hit for maior que 128ms ele desliga a flag -> hitOcurredRecently
-          delay(30);
           uint8_t midiVelocity = min(127, ((highestYet >> midiVelocityScaleDownAmount) + 1));
           uint16_t nota = notes[padNo];
           usbMIDI.sendNoteOff(nota, midiVelocity, 1); // We add 1 onto the velocity so that the result is never 0, which would mean the same as a note-off 
@@ -395,14 +393,13 @@ public:
             if (msPrevious >= tailLength)
             {
               // Serial.println("--------------------------------------------");
-              Serial.println("Tocado padNo: " + String(padNo));  
+              // Serial.println("Tocado padNo: " + String(padNo));  
               // Serial.println("Tocado ledPadIndex: " + String(ledPadIndex));
               // Serial.println("Tocado tailLength: " + String(tailLength));
               // Serial.println("Tocado msPrevious: " + String(msPrevious));
               // Serial.println("modo: 1");
               // Serial.println("--------------------------------------------");
               previousHitStillRecent = false;               // Se o gap entre o ultimo hit for maior que 128ms, desliga a flag -> "previousHitStillRecent"
-              // delay(30);
               // triggerLeds(MODE_SOLID_SC, typePadId, ledPadIndex, colorSc);
             }
             else
@@ -425,8 +422,8 @@ public:
 
         if (hitOccurredRecently)
         {
-          //Serial.println("-----------------------------hitOccurredRecently---------------------------------");
-          //Serial.println("pin: " + String(padNo));
+          // Serial.println("-----------------------------hitOccurredRecently---------------------------------");
+          // Serial.println("pin: " + String(padNo));
           // Serial.println("value: " + String(value));
           // Serial.println("thresholdNow " + String(thresholdNow));
           // Serial.println("gap: " + String(msPassed));
@@ -462,7 +459,6 @@ void turnOnLeds(uint32_t color, uint32_t timeDelay) {
   Serial.println("triggerThresholds: " + String(triggerThresholds[0]) + " " + String(triggerThresholds[1]));
   Serial.println("--------------------------------------------------------------");
   delay(timeDelay);
-
   for (uint16_t i = 0; i < NUM_PADS; i++)
   {
     triggerLeds(MODE_SOLID_PR, ledStripes[i].ledPadType.typeId, i, color);
@@ -543,14 +539,13 @@ void changeColors(char colorMode) {
 // Liga os leds com a cor primária
 // -----------------------------------------------------------------------------
 void turnOnLedsModePrSc(uint32_t firstDelay, uint32_t secondDelay) {
-  // Serial.println("--------------------------------------------------------------");
-  // Serial.println("triggerThresholds: " + String(triggerThresholds[0]) + " " + String(triggerThresholds[1]));
-  // Serial.println("--------------------------------------------------------------");
+  Serial.println("--------------------------------------------------------------");
+  Serial.println("triggerThresholds: " + String(triggerThresholds[0]) + " " + String(triggerThresholds[1]));
+  Serial.println("--------------------------------------------------------------");
   for (uint16_t i = 0; i < NUM_PADS; i++)
   {
     ledStripes[i].neoPixelStripe->begin();
-    // pads[i].init(piezoPadPins[i], ledStripes[i].ledPadType.typeId, i);
-    pads[0].init(piezoPadPins[8], ledStripes[8].ledPadType.typeId, 8);
+    pads[i].init(piezoPadPins[i], ledStripes[i].ledPadType.typeId, i);
     Serial.println("PIEZO_PIN: " + String(piezoPadPins[i] + "LED_PIN: " ));
   }
   turnOnLeds(colorPr, 0);
@@ -594,7 +589,7 @@ void randomEffectMijoDoCachorroAlado(){
   turnOnLeds(rosaEscuro,150);
   turnOnLeds(verde, 150);
   turnOnLeds(ultimaCor, 150);
-  turnOnLeds(colorPr, 150);
+  turnOnLeds(colorSc, 150);
 }
 
 // -----------------------------------------------------------------------------
@@ -610,146 +605,10 @@ char keys[ROWS][COLS] = {
   {'*','0','#','D'}
 };
 
-byte rowPins[ROWS] = {KEYPAD_PIN_8, KEYPAD_PIN_7, KEYPAD_PIN_6, KEYPAD_PIN_5}; //connect to the row pinouts of the keypad
-byte colPins[COLS] = {KEYPAD_PIN_4, KEYPAD_PIN_3, KEYPAD_PIN_2, KEYPAD_PIN_1}; //connect to the column pinouts of the k
+byte rowPins[ROWS] = { KEYPAD_PIN_5, KEYPAD_PIN_6, KEYPAD_PIN_7, KEYPAD_PIN_8 }; //connect to the row pinouts of the keypad
+byte colPins[COLS] = { KEYPAD_PIN_1, KEYPAD_PIN_2, KEYPAD_PIN_3, KEYPAD_PIN_4 }; //connect to the column pinouts of the k
 
 Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
-
-// -----------------------------------------------------------------------------
-// FREQUENCY Measure
-// -----------------------------------------------------------------------------
-double freqSum=0;
-int freqCount=0;
-int frequencyGap = 100.0;
-float frequencyMeasured;
-
-void changedFrequency(float frequency) {
-  int freq = frequency;
-  switch(freq) {
-  // vermelho (1000 a 2000)
-  case 100 ... 149:
-      colorPr = colors[0];
-      break;
-  case 149 ... 199:
-      colorSc = colors[0];
-      break;
-  // azul claro (2000 a 3000)
-  case 200 ... 249:
-      colorPr = colors[1];
-      break;
-  case 250 ... 299:
-      colorSc = colors[1];
-      break;
-  // rosa escuro (3000 a 4000)
-  case 300 ... 349:
-      colorPr = colors[2];
-      break;
-  case 349 ... 3980:
-      colorSc = colors[2];
-      break;
-  // verde (4000 a 5000)
-  case 400 ... 449:
-      colorPr = colors[3];
-      break;
-  case 450 ... 499:
-      colorSc = colors[3];
-      break;
-  // azul (5000 a 6000)
-  case 500 ... 549:
-      colorPr = colors[4];
-      break;
-  case 550 ... 599:
-      colorSc = colors[4];
-      break;
-  // amarelo (6000 a 7000)
-  case 600 ... 649:
-      colorPr = colors[5];
-      break;
-  case 650 ... 699:
-      colorSc = colors[5];
-      break;
-  // amarelo escuro (7000 a 8000)
-  case 700 ... 749:
-      colorPr = colors[6];
-      break;
-  case 750 ... 799:
-      colorSc = colors[6];
-      break;
-  // amarelo claro (8000 a 9000)
-  case 800 ... 849:
-      colorPr = colors[7];
-      break;
-  case 850 ... 899:
-      colorSc = colors[7];
-      break;
-  // roxo (9000 a 10000)
-  case 900 ... 949:
-      colorPr = colors[8];
-      break;
-  case 950 ... 999:
-      colorSc = colors[8];
-      break;
-  // laranja (9000 a 1000)
-  case 1000 ... 1049:
-      colorPr = colors[9];
-      break;
-  case 1050 ... 1099:
-      colorSc = colors[9];
-      break;
-  // branco (10000 a 11000)
-  case 1100 ... 1149:
-      colorPr = colors[10];
-      break;
-  case 1150 ... 1199:
-      colorSc = colors[10];
-      break;
-  }
-}
-
-// -----------------------------------------------------------------------------
-// Loop principal do ESP
-// -----------------------------------------------------------------------------
-
-void freqMeasure() {
-  freqSum = freqSum + FreqMeasure.read();
-  freqCount = freqCount + 1;
-  if (freqCount > 30) {
-    float readedFrequency = FreqMeasure.countToFrequency(freqSum / freqCount);
-    float gap = abs(frequencyMeasured - readedFrequency);
-    if(gap > frequencyGap) changedFrequency(readedFrequency);
-    frequencyMeasured = readedFrequency;
-    Serial.print("Freq Measure: ");
-    Serial.println(frequencyMeasured);
-    freqSum = 0;
-    freqCount = 0;
-  }
-} 
-
-void keypadClicked() {
-  char key = keypad.getKey();// Read the key
-  if (key){
-    Serial.print("Key Pressed: ");
-    Serial.println(key);
-    changeColors(key);
-  }
-}
-
-void padLoop() {
-  while(1) {
-    for (uint8_t i = 0; i < NUM_PADS; i++) {
-      pads[i].tick();
-    }
-    threads.yield();
-  }
-}
-
-void padColors() {
-  while(1) {
-    freqMeasure();
-    keypadClicked();
-    threads.yield();
-  }
-}
 
 // -----------------------------------------------------------------------------
 // Configurações de inicialização do ESP
@@ -769,15 +628,15 @@ void setup()
   pinMode(PIEZO_PIN_8, INPUT);
   pinMode(PIEZO_PIN_9, INPUT);
 
-  pinMode(KEYPAD_PIN_1, INPUT);
-  pinMode(KEYPAD_PIN_2, INPUT);
-  pinMode(KEYPAD_PIN_3, INPUT);
-  pinMode(KEYPAD_PIN_4, INPUT);
-  pinMode(KEYPAD_PIN_5, INPUT);
-  pinMode(KEYPAD_PIN_6, INPUT);
-  pinMode(KEYPAD_PIN_7, INPUT);
-  pinMode(KEYPAD_PIN_8, INPUT);
-  
+  pinMode(KEYPAD_PIN_1, INPUT_PULLUP);
+  pinMode(KEYPAD_PIN_2, INPUT_PULLUP);
+  pinMode(KEYPAD_PIN_3, INPUT_PULLUP);
+  pinMode(KEYPAD_PIN_4, INPUT_PULLUP);
+  pinMode(KEYPAD_PIN_5, INPUT_PULLUP);
+  pinMode(KEYPAD_PIN_6, INPUT_PULLUP);
+  pinMode(KEYPAD_PIN_7, INPUT_PULLUP);
+  pinMode(KEYPAD_PIN_8, INPUT_PULLUP);
+ 
   pinMode(LED_PIN_1, OUTPUT);
   pinMode(LED_PIN_2, OUTPUT);
   pinMode(LED_PIN_3, OUTPUT);
@@ -794,9 +653,40 @@ void setup()
   // Biblioteca de Cores
   turnOnLedsModePrSc(200, 200);
   Serial.println("--------------------------------------------------------------");
-  FreqMeasure.begin();
-  threads.addThread(padLoop);
-  threads.addThread(padColors);
+  //threads.addThread(thread_pads_func);
+  //threads.addThread(thread_keyboard_func);
 }
 
-void loop() {}
+// -----------------------------------------------------------------------------
+// Loop principal do ESP
+// -----------------------------------------------------------------------------
+
+void loop() { 
+  for (uint8_t i = 0; i < NUM_PADS; i++)
+  {
+    pads[i].tick();
+  }
+  
+  char key = keypad.getKey();// Read the key
+  if (key){
+    Serial.print("Key Pressed : ");
+    Serial.println(key);
+    changeColors(key);
+  }
+}
+
+void thread_pads_func() {
+  for (uint8_t i = 0; i < NUM_PADS; i++)
+  {
+    pads[i].tick();
+  }
+}
+
+void thread_keyboard_func() {
+  char key = keypad.getKey();// Read the key
+  if (key){
+    Serial.print("Key Pressed : ");
+    Serial.println(key);
+    changeColors(key);
+  }
+}

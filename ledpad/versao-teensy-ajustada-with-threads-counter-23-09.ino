@@ -2,7 +2,7 @@
 #include <Adafruit_NeoPixel.h>
 #include <Led_Matrix.h>
 #include <Keypad.h>
-#include <FreqMeasure.h>
+#include <FreqCount.h>
 #include <map>
 #include <vector>
 #include <TeensyThreads.h>
@@ -332,7 +332,7 @@ public:
         usbMIDI.sendNoteOn(nota, midiVelocity, 1); // We add 1 onto the velocity so that the result is never 0, which would mean the same as a note-off
         // Send the MIDI note
         // Serial.println("--------------------------------------------");
-        Serial.println("Tocado padNo: " + String(padNo) + ' ' + String(analogRead(padNo)));  
+        // Serial.println("Tocado padNo: " + String(padNo) + ' ' + String(analogRead(padNo)));  
         // Serial.println("Tocado ledPadIndex: " + String(ledPadIndex));
         // Serial.println("Tocado highestYet: " + String(highestYet));
         // Serial.println("--------------------------------------------");  
@@ -549,8 +549,7 @@ void turnOnLedsModePrSc(uint32_t firstDelay, uint32_t secondDelay) {
   for (uint16_t i = 0; i < NUM_PADS; i++)
   {
     ledStripes[i].neoPixelStripe->begin();
-    // pads[i].init(piezoPadPins[i], ledStripes[i].ledPadType.typeId, i);
-    pads[0].init(piezoPadPins[8], ledStripes[8].ledPadType.typeId, 8);
+    pads[i].init(piezoPadPins[i], ledStripes[i].ledPadType.typeId, i);
     Serial.println("PIEZO_PIN: " + String(piezoPadPins[i] + "LED_PIN: " ));
   }
   turnOnLeds(colorPr, 0);
@@ -621,86 +620,87 @@ Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 double freqSum=0;
 int freqCount=0;
 int frequencyGap = 100.0;
-float frequencyMeasured;
+unsigned long frequencyMeasured;
 
-void changedFrequency(float frequency) {
+
+void changedFrequency(unsigned long frequency) {
   int freq = frequency;
   switch(freq) {
   // vermelho (1000 a 2000)
-  case 100 ... 149:
+  case 990 ... 1489:
       colorPr = colors[0];
       break;
-  case 149 ... 199:
+  case 1490 ... 1989:
       colorSc = colors[0];
       break;
   // azul claro (2000 a 3000)
-  case 200 ... 249:
+  case 1990 ... 2489:
       colorPr = colors[1];
       break;
-  case 250 ... 299:
+  case 2490 ... 2989:
       colorSc = colors[1];
       break;
   // rosa escuro (3000 a 4000)
-  case 300 ... 349:
+  case 2990 ... 3489:
       colorPr = colors[2];
       break;
-  case 349 ... 3980:
+  case 3490 ... 3989:
       colorSc = colors[2];
       break;
   // verde (4000 a 5000)
-  case 400 ... 449:
+  case 3990 ... 4489:
       colorPr = colors[3];
       break;
-  case 450 ... 499:
+  case 4490 ... 4989:
       colorSc = colors[3];
       break;
   // azul (5000 a 6000)
-  case 500 ... 549:
+  case 4990 ... 5489:
       colorPr = colors[4];
       break;
-  case 550 ... 599:
+  case 5490 ... 5989:
       colorSc = colors[4];
       break;
   // amarelo (6000 a 7000)
-  case 600 ... 649:
+  case 5990 ... 6489:
       colorPr = colors[5];
       break;
-  case 650 ... 699:
+  case 6490 ... 6989:
       colorSc = colors[5];
       break;
   // amarelo escuro (7000 a 8000)
-  case 700 ... 749:
+  case 6990 ... 7489:
       colorPr = colors[6];
       break;
-  case 750 ... 799:
+  case 7490 ... 7989:
       colorSc = colors[6];
       break;
   // amarelo claro (8000 a 9000)
-  case 800 ... 849:
+  case 7990 ... 8489:
       colorPr = colors[7];
       break;
-  case 850 ... 899:
+  case 8490 ... 8989:
       colorSc = colors[7];
       break;
   // roxo (9000 a 10000)
-  case 900 ... 949:
+  case 8990 ... 9489:
       colorPr = colors[8];
       break;
-  case 950 ... 999:
+  case 9490 ... 9989:
       colorSc = colors[8];
       break;
   // laranja (9000 a 1000)
-  case 1000 ... 1049:
+  case 9990 ... 10489:
       colorPr = colors[9];
       break;
-  case 1050 ... 1099:
+  case 10490 ... 10989:
       colorSc = colors[9];
       break;
   // branco (10000 a 11000)
-  case 1100 ... 1149:
+  case 10990 ... 11489:
       colorPr = colors[10];
       break;
-  case 1150 ... 1199:
+  case 11490 ... 11989:
       colorSc = colors[10];
       break;
   }
@@ -710,19 +710,34 @@ void changedFrequency(float frequency) {
 // Loop principal do ESP
 // -----------------------------------------------------------------------------
 
+// void freqMeasure() {
+//   freqSum = freqSum + FreqMeasure.read();
+//   freqCount = freqCount + 1;
+//   if (freqCount > 30) {
+//     float readedFrequency = FreqMeasure.countToFrequency(freqSum / freqCount);
+//     float gap = abs(frequencyMeasured - readedFrequency);
+//     if(gap > frequencyGap) changedFrequency(readedFrequency);
+//     frequencyMeasured = readedFrequency;
+//     Serial.print("Freq Measure: ");
+//     Serial.println(frequencyMeasured);
+//     freqSum = 0;
+//     freqCount = 0;
+//   }
+// }
+
 void freqMeasure() {
-  freqSum = freqSum + FreqMeasure.read();
-  freqCount = freqCount + 1;
-  if (freqCount > 30) {
-    float readedFrequency = FreqMeasure.countToFrequency(freqSum / freqCount);
-    float gap = abs(frequencyMeasured - readedFrequency);
-    if(gap > frequencyGap) changedFrequency(readedFrequency);
-    frequencyMeasured = readedFrequency;
-    Serial.print("Freq Measure: ");
-    Serial.println(frequencyMeasured);
-    freqSum = 0;
-    freqCount = 0;
-  }
+    if (FreqCount.available()) {
+      unsigned long readedFrequency = FreqCount.read();
+      unsigned long gap = abs(frequencyMeasured - readedFrequency);
+      if(gap > frequencyGap) {
+        changedFrequency(readedFrequency);
+        Serial.print("Changed Freq: ");
+        Serial.println(frequencyMeasured);
+      }
+      frequencyMeasured = readedFrequency;
+      Serial.print("Freq Measure: ");
+      Serial.println(frequencyMeasured);
+    }
 } 
 
 void keypadClicked() {
@@ -794,7 +809,7 @@ void setup()
   // Biblioteca de Cores
   turnOnLedsModePrSc(200, 200);
   Serial.println("--------------------------------------------------------------");
-  FreqMeasure.begin();
+  FreqCount.begin(1000);
   threads.addThread(padLoop);
   threads.addThread(padColors);
 }
