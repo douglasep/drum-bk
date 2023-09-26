@@ -2,10 +2,9 @@
 #include <Adafruit_NeoPixel.h>
 #include <Led_Matrix.h>
 #include <Keypad.h>
-#include <FreqMeasure.h>
+#include <FreqMeasureMulti.h>
 #include <map>
 #include <vector>
-#include <TeensyThreads.h>
  
 #define NUM_PADS 9
 
@@ -332,7 +331,7 @@ public:
         usbMIDI.sendNoteOn(nota, midiVelocity, 1); // We add 1 onto the velocity so that the result is never 0, which would mean the same as a note-off
         // Send the MIDI note
         // Serial.println("--------------------------------------------");
-        Serial.println("Tocado padNo: " + String(padNo) + ' ' + String(analogRead(padNo)));  
+        // Serial.println("Tocado padNo: " + String(padNo) + ' ' + String(analogRead(padNo)));  
         // Serial.println("Tocado ledPadIndex: " + String(ledPadIndex));
         // Serial.println("Tocado highestYet: " + String(highestYet));
         // Serial.println("--------------------------------------------");  
@@ -549,8 +548,7 @@ void turnOnLedsModePrSc(uint32_t firstDelay, uint32_t secondDelay) {
   for (uint16_t i = 0; i < NUM_PADS; i++)
   {
     ledStripes[i].neoPixelStripe->begin();
-    // pads[i].init(piezoPadPins[i], ledStripes[i].ledPadType.typeId, i);
-    pads[0].init(piezoPadPins[8], ledStripes[8].ledPadType.typeId, 8);
+    pads[i].init(piezoPadPins[i], ledStripes[i].ledPadType.typeId, i);
     Serial.println("PIEZO_PIN: " + String(piezoPadPins[i] + "LED_PIN: " ));
   }
   turnOnLeds(colorPr, 0);
@@ -610,113 +608,124 @@ char keys[ROWS][COLS] = {
   {'*','0','#','D'}
 };
 
-byte rowPins[ROWS] = {KEYPAD_PIN_8, KEYPAD_PIN_7, KEYPAD_PIN_6, KEYPAD_PIN_5}; //connect to the row pinouts of the keypad
-byte colPins[COLS] = {KEYPAD_PIN_4, KEYPAD_PIN_3, KEYPAD_PIN_2, KEYPAD_PIN_1}; //connect to the column pinouts of the k
+byte rowPins[ROWS] = { KEYPAD_PIN_5, KEYPAD_PIN_6, KEYPAD_PIN_7, KEYPAD_PIN_8 }; //connect to the row pinouts of the keypad
+byte colPins[COLS] = { KEYPAD_PIN_1, KEYPAD_PIN_2, KEYPAD_PIN_3, KEYPAD_PIN_4 }; //connect to the column pinouts of the k
 
 Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 
 // -----------------------------------------------------------------------------
 // FREQUENCY Measure
 // -----------------------------------------------------------------------------
+FreqMeasureMulti freqInput;
 double freqSum=0;
 int freqCount=0;
-int frequencyGap = 100.0;
+float frequencyColorGap = 100; // Diferenca de uma cor para a outra
+int freqIntervalTime = 500; // atualiza as cores a cada 0,5 segundos
 float frequencyMeasured;
+
 
 void changedFrequency(float frequency) {
   int freq = frequency;
+  Serial.print("Freq changed to: ");
+  Serial.println(freq);
   switch(freq) {
   // vermelho (1000 a 2000)
-  case 100 ... 149:
+  case 100 ... 199:
       colorPr = colors[0];
       break;
-  case 149 ... 199:
+  case 200 ... 299:
       colorSc = colors[0];
+      turnOnLeds(colorSc, 0);
       break;
   // azul claro (2000 a 3000)
-  case 200 ... 249:
+  case 300 ... 399:
       colorPr = colors[1];
       break;
-  case 250 ... 299:
+  case 400 ... 499:
       colorSc = colors[1];
+      turnOnLeds(colorSc, 0);
       break;
   // rosa escuro (3000 a 4000)
-  case 300 ... 349:
+  case 500 ... 599:
       colorPr = colors[2];
       break;
-  case 349 ... 398:
+  case 600 ... 699:
       colorSc = colors[2];
+      turnOnLeds(colorSc, 0);
       break;
   // verde (4000 a 5000)
-  case 400 ... 449:
+  case 700 ... 799:
       colorPr = colors[3];
       break;
-  case 450 ... 499:
+  case 800 ... 899:
       colorSc = colors[3];
+      turnOnLeds(colorSc, 0);
       break;
   // azul (5000 a 6000)
-  case 500 ... 549:
+  case 900 ... 999:
       colorPr = colors[4];
       break;
-  case 550 ... 599:
+  case 1000 ... 1099:
       colorSc = colors[4];
+      turnOnLeds(colorSc, 0);
       break;
   // amarelo (6000 a 7000)
-  case 600 ... 649:
+  case 1100 ... 1199:
       colorPr = colors[5];
       break;
-  case 650 ... 699:
+  case 1200 ... 1299:
       colorSc = colors[5];
+      turnOnLeds(colorSc, 0);
       break;
   // amarelo escuro (7000 a 8000)
-  case 700 ... 749:
+  case 1300 ... 1399:
       colorPr = colors[6];
       break;
-  case 750 ... 799:
+  case 1400 ... 1499:
       colorSc = colors[6];
+      turnOnLeds(colorSc, 0);
       break;
   // amarelo claro (8000 a 9000)
-  case 800 ... 849:
+  case 1500 ... 1599:
       colorPr = colors[7];
       break;
-  case 850 ... 899:
+  case 1600 ... 1699:
       colorSc = colors[7];
+      turnOnLeds(colorSc, 0);
       break;
   // roxo (9000 a 10000)
-  case 900 ... 949:
+  case 1700 ... 1799:
       colorPr = colors[8];
       break;
-  case 950 ... 999:
+  case 1800 ... 1899:
       colorSc = colors[8];
+      turnOnLeds(colorSc, 0);
       break;
   // laranja (9000 a 1000)
-  case 1000 ... 1049:
+  case 1900 ... 1999:
       colorPr = colors[9];
       break;
-  case 1050 ... 1099:
+  case 2000 ... 2099:
       colorSc = colors[9];
-      break;
-  // branco (10000 a 11000)
-  case 1100 ... 1149:
-      colorPr = colors[10];
-      break;
-  case 1150 ... 1199:
-      colorSc = colors[10];
+      turnOnLeds(colorSc, 0);
       break;
   }
 }
-
 // -----------------------------------------------------------------------------
 // Loop principal do ESP
 // -----------------------------------------------------------------------------
 
 void freqMeasure() {
-  freqSum = freqSum + FreqMeasure.read();
-  freqCount = freqCount + 1;
-  if (freqCount > 30) {
-    float readedFrequency = FreqMeasure.countToFrequency(freqSum / freqCount);
+  if (freqInput.available()) {
+    freqSum = freqSum + freqInput.read();
+    freqCount = freqCount + 1; 
+  }
+  if (freqCount > freqIntervalTime) {
+    float readedFrequency = freqInput.countToFrequency(freqSum / freqCount);
     float gap = abs(frequencyMeasured - readedFrequency);
-    if(gap > frequencyGap) changedFrequency(readedFrequency);
+    if(gap > frequencyColorGap) {
+      changedFrequency(readedFrequency);
+    }
     frequencyMeasured = readedFrequency;
     Serial.print("Freq Measure: ");
     Serial.println(frequencyMeasured);
@@ -739,16 +748,137 @@ void padLoop() {
     for (uint8_t i = 0; i < NUM_PADS; i++) {
       pads[i].tick();
     }
-    threads.yield();
+    // threads.yield();
   }
 }
 
+void padLoop1() {
+//  pads[0].tick();
+  // while(1) {
+    // Serial.print("digitalRead(PIEZO_PIN_1): ");
+    // Serial.println(digitalRead(PIEZO_PIN_1));
+    // if(digitalRead(PIEZO_PIN_1) == HIGH){
+  // if(analogRead(PIEZO_PIN_1) > threshold){
+      triggerLeds(MODE_SOLID_PR, 0, 0, colorPr);
+      usbMIDI.sendNoteOn(36, 127, 1);
+      delay(1000);
+      triggerLeds(MODE_SOLID_PR, 0, 0, colorSc);
+    // }
+    // threads.delay(1000);
+  // }
+}
+void padLoop2() {
+//  pads[1].tick();
+  // while(1) {
+    // if(digitalRead(PIEZO_PIN_2) == HIGH){
+    // if(analogRead(PIEZO_PIN_2) > threshold){
+      triggerLeds(MODE_SOLID_PR, 1, 1, colorPr);
+      usbMIDI.sendNoteOn(37, 127, 1);
+      delay(1000);
+      triggerLeds(MODE_SOLID_PR, 1, 1, colorSc);
+    // } 
+    // threads.delay(1000);
+  // }
+}
+void padLoop3() {
+//  pads[2].tick();
+  // while(1) {
+    // if(digitalRead(PIEZO_PIN_3) == HIGH){
+    // if(analogRead(PIEZO_PIN_3) > threshold){
+      triggerLeds(MODE_SOLID_PR, 2, 2, colorPr);
+      usbMIDI.sendNoteOn(38, 127, 1);
+      delay(1000);
+      triggerLeds(MODE_SOLID_PR, 2, 2, colorSc);
+    // }
+    // threads.delay(1000);
+  // }
+}
+void padLoop4() {
+//  pads[3].tick();
+  // while(1) {
+    // if(digitalRead(PIEZO_PIN_4) == HIGH){
+    // if(analogRead(PIEZO_PIN_4) > threshold){
+      triggerLeds(MODE_SOLID_PR, 3, 3, colorPr);
+      usbMIDI.sendNoteOn(39, 127, 1);
+      delay(1000);
+      triggerLeds(MODE_SOLID_PR, 3, 3, colorSc);
+    // }
+    // threads.delay(1000);
+  // }
+}
+void padLoop5() {
+//  pads[4].tick();
+  // while(1) {
+    // if(digitalRead(PIEZO_PIN_5) == HIGH){
+    // if(analogRead(PIEZO_PIN_5) > threshold){
+      triggerLeds(MODE_SOLID_PR, 4, 4, colorPr);
+      usbMIDI.sendNoteOn(40, 127, 1);
+      delay(1000);
+      triggerLeds(MODE_SOLID_PR, 4, 4, colorSc);
+    // }
+    // threads.delay(1000);
+  // }
+}
+void padLoop6() {
+//  pads[5].tick();
+  // while(1) {
+  //   if(digitalRead(PIEZO_PIN_6) == HIGH){
+    // if(analogRead(PIEZO_PIN_6) > threshold){
+      triggerLeds(MODE_SOLID_PR, 5, 5, colorPr);
+      usbMIDI.sendNoteOn(45, 127, 1);
+      delay(1000);
+      triggerLeds(MODE_SOLID_PR, 5, 5, colorSc);
+    // }
+    // threads.delay(1000);
+  // }
+}
+void padLoop7() {
+//  pads[6].tick();
+  // while(1) {
+  //   if(digitalRead(PIEZO_PIN_7) == HIGH){
+    // if(analogRead(PIEZO_PIN_7) > threshold){
+      triggerLeds(MODE_SOLID_PR, 6, 6, colorPr);
+      usbMIDI.sendNoteOn(42, 127, 1);
+      delay(1000);
+      triggerLeds(MODE_SOLID_PR, 6, 6, colorSc);
+    // }
+    // threads.delay(1000);
+  // }
+}
+void padLoop8() {
+//  pads[7].tick();
+  // while(1) {
+  //   if(digitalRead(PIEZO_PIN_8) == HIGH){
+    // if(analogRead(PIEZO_PIN_8) > threshold){
+      triggerLeds(MODE_SOLID_PR, 7, 7, colorPr);
+      usbMIDI.sendNoteOn(43, 127, 1);
+      delay(1000);
+      triggerLeds(MODE_SOLID_PR, 7, 7, colorSc);
+    // }
+    // threads.delay(1000);
+  // }
+}
+void padLoop9() {
+  //  pads[8].tick();
+  // while(1) {
+  //   if(digitalRead(PIEZO_PIN_9) == HIGH){
+    // if(analogRead(PIEZO_PIN_9) > threshold){
+      triggerLeds(MODE_SOLID_PR, 8, 8, colorPr);
+      usbMIDI.sendNoteOn(44, 127, 1);
+      // threads.delay(1000);
+      triggerLeds(MODE_SOLID_PR, 8, 8, colorSc);
+    // }
+    // threads.delay(1000);
+  // }
+}
+
 void padColors() {
-  while(1) {
+  // while(1) 
     freqMeasure();
-    keypadClicked();
-    threads.yield();
-  }
+    // threads.delay(1000);
+    // keypadClicked();
+    // threads.yield();
+  // }
 }
 
 // -----------------------------------------------------------------------------
@@ -757,7 +887,9 @@ void padColors() {
 void setup()
 {
   Serial.begin(115200);
+  while (!Serial) ; // wait for Arduino Serial Monitor
   Serial.println("Iniciando o projeto");
+  Serial.println("alive");
   analogReadResolution(10);
   pinMode(PIEZO_PIN_1, INPUT);
   pinMode(PIEZO_PIN_2, INPUT);
@@ -794,9 +926,27 @@ void setup()
   // Biblioteca de Cores
   turnOnLedsModePrSc(200, 200);
   Serial.println("--------------------------------------------------------------");
-  FreqMeasure.begin();
-  threads.addThread(padLoop);
-  threads.addThread(padColors);
+  // freqInput.begin(36);
+  attachInterrupt(digitalPinToInterrupt(PIEZO_PIN_1), padLoop1, HIGH);
+  attachInterrupt(digitalPinToInterrupt(PIEZO_PIN_2), padLoop2, HIGH);
+  attachInterrupt(digitalPinToInterrupt(PIEZO_PIN_3), padLoop3, HIGH);
+  attachInterrupt(digitalPinToInterrupt(PIEZO_PIN_4), padLoop4, HIGH);
+  attachInterrupt(digitalPinToInterrupt(PIEZO_PIN_5), padLoop5, HIGH);
+  attachInterrupt(digitalPinToInterrupt(PIEZO_PIN_6), padLoop6, HIGH);
+  attachInterrupt(digitalPinToInterrupt(PIEZO_PIN_7), padLoop7, HIGH);
+  attachInterrupt(digitalPinToInterrupt(PIEZO_PIN_8), padLoop8, HIGH);
+  attachInterrupt(digitalPinToInterrupt(PIEZO_PIN_9), padLoop9, HIGH);
+
+  // attachInterrupt(digitalPinToInterrupt(KEYPAD_PIN_1), keypadClicked, HIGH);
+  // attachInterrupt(digitalPinToInterrupt(KEYPAD_PIN_2), keypadClicked, HIGH);
+  // attachInterrupt(digitalPinToInterrupt(KEYPAD_PIN_3), keypadClicked, HIGH);
+  // attachInterrupt(digitalPinToInterrupt(KEYPAD_PIN_4), keypaClicked, HIGH);
+  // attachInterrupt(digitalPinToInterrupt(KEYPAD_PIN_5), keypadClicked, HIGH);
+  // attachInterrupt(digitalPinToInterrupt(KEYPAD_PIN_6), keypadClicked, HIGH);
+  // attachInterrupt(digitalPinToInterrupt(KEYPAD_PIN_7), keypadClicked, HIGH);
+  // attachInterrupt(digitalPinToInterrupt(KEYPAD_PIN_8), keypadClicked, HIGH);
 }
 
-void loop() {}
+void loop() {
+  // padColors();
+}

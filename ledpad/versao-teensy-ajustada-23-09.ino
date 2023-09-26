@@ -616,7 +616,7 @@ Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 // -----------------------------------------------------------------------------
 // FREQUENCY Measure
 // -----------------------------------------------------------------------------
-double freSum=0;
+double freqSum=0;
 int freqCount=0;
 int frequencyGap = 100.0;
 float frequencyMeasured;
@@ -625,48 +625,46 @@ void changedFrequency(float frequency) {
   if(frequency < 100.0 ) {
       colorPr = colors[11];
       colorSc = colors[11];
-      break;
   } else if(frequency < 200.0 ) {
       colorPr = colors[11];
       colorSc = colors[0];
-      break;
   } else if(frequency < 300.0 ) {
       colorPr = colors[2];
       colorSc = colors[3];
-      break;
+
   } else if(frequency < 400.0 ) {
       colorPr = colors[3];
       colorSc = colors[4];
-      break;
+
   } else if(frequency < 500.0 ) {
       colorPr = colors[4];
       colorSc = colors[5];
-      break;
+
   } else if(frequency < 600.0 ) {
       colorPr = colors[5];
       colorSc = colors[6];
-      break;
+
   } else if(frequency < 700.0 ) {
       colorPr = colors[6];
       colorSc = colors[7];
-      break;
+
   } else if(frequency < 800.0 ) {
       colorPr = colors[7];
       colorSc = colors[8];
-      break;
+
   } else if(frequency < 900.0 ) {
       colorPr = colors[8];
       colorSc = colors[9];
-      break;
+
   } else if(frequency < 1000.0 ) {
       colorPr = colors[9];
       colorPr = colors[10];
       turnOff(); 
-      break;
+
   } else if(frequency < 1100.0 ) {
       colorPr = colors[0];
       colorPr = colors[1];
-      break;
+
   }
 }
 
