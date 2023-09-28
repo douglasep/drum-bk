@@ -80,7 +80,7 @@ uint32_t azulClaro = 0x007AA3;
 uint32_t azul = 0x0000FF;
 uint32_t branco = 0xFFFFFF;
 
-const uint32_t colors[11] = { vermelho, azulClaro, rosaEscuro, verde, azul, amarelo, amareloEscuro, amareloClaro, roxo, laranja, branco }; // Threshold iniciais {pad1, pad2, pad3, pad2}
+const uint32_t colors[11] = { vermelho, azulClaro, rosaEscuro, verde, azul, amareloEscuro, roxo, laranja, branco }; // Threshold iniciais {pad1, pad2, pad3, pad2}
 const int colorsSize = *(&colors + 1) - colors; 
 uint8_t colorsIndex = 0;
 
@@ -765,6 +765,6 @@ void setup()
 }
 
 void loop() {
-//  freqMeasure();
+  //  freqMeasure();
   delay(1);
 }

@@ -78,15 +78,16 @@ uint32_t verde = 0x00FF00;
 uint32_t azulClaro = 0x007AA3;
 uint32_t azul = 0x0000FF;
 uint32_t branco = 0xFFFFFF;
+uint32_t preto = 0x000000;
+uint32_t offColor = 0x000000;
 
-const uint32_t colors[11] = { vermelho, azulClaro, rosaEscuro, verde, azul, amarelo, amareloEscuro, amareloClaro, roxo, laranja, branco }; // Threshold iniciais {pad1, pad2, pad3, pad2}
+const uint32_t colors[10] = { vermelho, azulClaro, rosaEscuro, verde, azul, amareloEscuro, roxo, laranja, branco, offColor }; // Threshold iniciais {pad1, pad2, pad3, pad2}
 const int colorsSize = *(&colors + 1) - colors; 
 uint8_t colorsIndex = 0;
 
-uint32_t offColor = 0x000000;
 uint32_t backlight = 0xFFE42D;
 uint32_t colorPr = vermelho; // Cor Primaria
-uint32_t colorSc = verde; // Cor Secundaria
+uint32_t colorSc = offColor; // Cor Secundaria
 uint32_t colorPad1 = colorSc; // Cor Primaria
 uint32_t colorPad2 = colorSc; // Cor Secundaria
 uint32_t colorPad3 = colorSc; // Cor Primaria
@@ -272,11 +273,10 @@ void triggerLeds(uint8_t modeId, uint8_t typePadId, uint8_t ledPadIndex, uint32_
 // -----------------------------------------------------------------------------
 // Liga os leds com a cor primária
 // -----------------------------------------------------------------------------
-void turnOnLeds(uint32_t color, uint32_t timeDelay) {
-  Serial.println("--------------------------------------------------------------");
-  Serial.println("triggerThresholds: " + String(triggerThresholds[0]) + " " + String(triggerThresholds[1]));
-  Serial.println("--------------------------------------------------------------");
-  delay(timeDelay);
+void turnOnLeds(uint32_t color) {
+  // Serial.println("--------------------------------------------------------------");
+  // Serial.println("triggerThresholds: " + String(triggerThresholds[0]) + " " + String(triggerThresholds[1]));
+  // Serial.println("--------------------------------------------------------------");
 
   for (uint16_t i = 0; i < NUM_PADS; i++)
   {
@@ -326,14 +326,14 @@ void changeColors(char colorMode) {
       break;
     case 'C':
       colorPr = laranja;
-      turnOnLeds(colorSc, 0);
+      turnOnLeds(colorSc);
       break;
     case 'D':
       setBrightness();
       break;
     case '*':
       changeSecondaryColor();
-      turnOnLeds(colorSc, 0);
+      turnOnLeds(colorSc);
       break;
     case '#':
       break;
@@ -365,17 +365,17 @@ void turnOnLedsModePrSc(uint32_t firstDelay, uint32_t secondDelay) {
   {
     ledStripes[i].neoPixelStripe->begin();
     // pads[i].init(piezoPadPins[i], ledStripes[i].ledPadType.typeId, i);
-    Serial.println("PIEZO_PIN: " + String(piezoPadPins[i] + "LED_PIN: " ));
+    // Serial.println("PIEZO_PIN: " + String(piezoPadPins[i] + "LED_PIN: " ));
   }
-  turnOnLeds(colorPr, 0);
-  turnOnLeds(colorSc, 200);
+  turnOnLeds(colorPr);
+  turnOnLeds(colorSc);
 }
 
 // -----------------------------------------------------------------------------
 // EFEITOS
 // -----------------------------------------------------------------------------
 void turnOff() {
-  turnOnLeds(offColor, 0);
+  turnOnLeds(offColor);
 }
 
 void setBrightness() {
@@ -388,7 +388,7 @@ void setBrightness() {
     ledStripes[i].neoPixelStripe->setBrightness(padBrightness);
     ledStripes[i].neoPixelStripe->show();
   }
-  Serial.println("Alterando Brightness: " + String(padBrightness));
+  // Serial.println("Alterando Brightness: " + String(padBrightness));
 }
 
 void changeSecondaryColor() {
@@ -405,10 +405,88 @@ void randomEffectMijoDoCachorroAlado(){
   if(colorPr == vermelho) {
     ultimaCor = roxo; 
   }
-  turnOnLeds(rosaEscuro,150);
-  turnOnLeds(verde, 150);
-  turnOnLeds(ultimaCor, 150);
-  turnOnLeds(colorPr, 150);
+  turnOnLeds(rosaEscuro);
+  delay(110);
+  turnOnLeds(verde);
+  delay(110);
+  turnOnLeds(ultimaCor);
+  delay(110);
+  turnOnLeds(colorSc);
+  delay(110);
+}
+
+void changeBrightness(int padBrightness){
+  if(padBrightness < 0) { 
+    padBrightness = 255;
+  }
+  for (uint16_t i = 0; i < NUM_PADS; i++)
+  {
+    ledStripes[i].neoPixelStripe->setBrightness(padBrightness);
+    ledStripes[i].neoPixelStripe->show();
+  }
+}
+
+void fadeOut(){
+  int fullBrightness = 255;
+  int stepMilisec = 10; // time / fullBrightness;
+  int padBrightness;
+  for (int i = 0; i < fullBrightness; i+=15) {
+    padBrightness = fullBrightness - i;
+    changeBrightness(padBrightness);
+    delay(stepMilisec);
+  }
+  colorSc = offColor;
+  turnOnLedsModePrSc(0,0);
+  changeBrightness(255);
+}
+
+void fadeIn(){
+  int fullBrightness = 255;
+  int stepMilisec = 10; // time / fullBrightness;
+  int padBrightness = 1;
+  while(padBrightness < fullBrightness) {
+    Serial.println(padBrightness, DEC);
+    padBrightness+=15;
+    for (uint16_t i = 0; i < NUM_PADS; i++)
+    {
+      ledStripes[i].neoPixelStripe->setBrightness(padBrightness);
+      delay(1);
+      ledStripes[i].neoPixelStripe->show();
+    }
+    delay(stepMilisec);
+  }
+  for (uint16_t i = 0; i < NUM_PADS; i++)
+  {
+    ledStripes[i].neoPixelStripe->setBrightness(254);
+    ledStripes[i].neoPixelStripe->show();
+  }
+}
+
+void cortinaEffect(){
+  int stepMilisec = 84;
+  cortinaEffectIn(stepMilisec);
+//  Serial.print("cortina effect out ");
+  cortinaEffectOut(stepMilisec);
+}
+
+void cortinaEffectIn(int stepMilisec) {
+  for (int count = 0; count < NUM_PADS; count++) {
+//    Serial.print("cortina effect in ");
+//    Serial.println(count);
+    triggerLeds(MODE_SOLID_PR, ledStripes[count].ledPadType.typeId, count, colorPr);
+    delay(stepMilisec);
+  }
+}
+
+void cortinaEffectOut(int stepMilisec) {
+  int padIndex;
+  for (int count = 1; count <= NUM_PADS; count++) {
+//    Serial.print("cortina effect out ");
+//    Serial.println(count);
+    padIndex = NUM_PADS - count;
+    triggerLeds(MODE_SOLID_SC, ledStripes[padIndex].ledPadType.typeId, padIndex, colorSc);
+    delay(stepMilisec);
+  } 
 }
 
 // -----------------------------------------------------------------------------
@@ -433,8 +511,8 @@ Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 // FREQUENCY Measure
 // -----------------------------------------------------------------------------
 FreqMeasureMulti freqInput;
-float frequencyColorGap = 400; // Diferenca de uma cor para a outra
-int freqIntervalTime = 100; // atualiza as cores a cada 100ms * 5 = 0.5s
+float frequencyColorGap = 100; // Diferenca de uma cor para a outra
+int freqIntervalTime = 60; // atualiza as cores a cada 100ms * 5 = 0.5s
 float freqSum=0;
 int freqCount=0, freqChangeCount=0;
 int currentFreq=0, prevFreq=0;
@@ -443,105 +521,104 @@ elapsedMillis freqTimeout;
 
 void changedFrequency(int frequency) {
   int freq = frequency;
-  Serial.print("Freq changed to: ");
-  Serial.println(freq);
+//   Serial.print("Freq changed to: ");
+//   Serial.println(freq);
   switch(freq) {
-  // vermelho primario (1.000hz)
-  case 800 ... 1300:
+  // vermelho primario (300hz)
+  case 200 ... 400:
+      colorSc = colors[0];
+      turnOnLeds(colorSc);
+      break;
+  // azul claro (600hz)
+  case 500 ... 700:
+      colorSc = colors[1];
+      turnOnLeds(colorSc);
+      break;
+  // rosa escuro (900hz)
+  case 800 ... 1000:
+      colorSc = colors[2];
+      turnOnLeds(colorSc);
+      break;
+  // verde (1200hz)
+  case 1100 ... 1300:
+      colorSc = colors[3];
+      turnOnLeds(colorSc);
+      break;
+  // (1500hz)
+  case 1400 ... 1600:
+      colorSc = colors[4];
+      turnOnLeds(colorSc);
+      break;
+  // (1.800hz)
+  case 1700 ... 1900:
+      colorSc = colors[5];
+      turnOnLeds(colorSc);
+      break;
+  // (2.100hz)
+  case 2000 ... 2200:
+      colorSc = colors[6];
+      turnOnLeds(colorSc);
+      break;
+  // (2.400hz)
+  case 2300 ... 2500:
+      colorSc = colors[7];
+      turnOnLeds(colorSc);
+      break;
+  // (2.700hz)
+  case 2600 ... 2800:
+      colorSc = colors[9];
+      turnOnLeds(colorSc);
+      break;
+  // amarelo primario (6.000hz)
+  case 2900 ... 3300:
       colorPr = colors[0];
       break;
-  // vermelho secundario (1.500hz)
-  case 1400 ... 1800:
-      colorSc = colors[0];
-      turnOnLeds(colorSc, 0);
-      break;
-  // azul claro primario (2.000hz)
-  case 1900 ... 2300:
+  // amarelo secundario (6.500hz)
+  case 3400 ... 3800:
       colorPr = colors[1];
       break;
-  // azul claro secundario (2.500hz)
-  case 2400 ... 2800:
-      colorSc = colors[1];
-      turnOnLeds(colorSc, 0);
-      break;
-  // rosa escuro primario (3.000hz)
-  case 2900 ... 3300:
+  // amarelo escuro (7.000hz)
+  case 3900 ... 4300:
       colorPr = colors[2];
       break;
-  // rosa escuro secundario (3.500hz)
-  case 3400 ... 3800:
-      colorSc = colors[2];
-      turnOnLeds(colorSc, 0);
-      break;
-  // verde primario (4.000hz)
-  case 3900 ... 4300:
+  // amarelo escuro (7.500hz)
+  case 4400 ... 4800:
       colorPr = colors[3];
       break;
-  // verde secundario (4.500hz)
-  case 4400 ... 4800:
-      colorSc = colors[3];
-      turnOnLeds(colorSc, 0);
-      break;
-  // azul primario (5.000hz)
+  // (5.600hz)
   case 4900 ... 5300:
       colorPr = colors[4];
       break;
-  // azul secundario (5.500hz)
+  // (5.600hz)
   case 5400 ... 5800:
-      colorSc = colors[4];
-      turnOnLeds(colorSc, 0);
-      break;
-  // amarelo primario (6.000hz)
-  case 5900 ... 6300:
       colorPr = colors[5];
       break;
-  // amarelo secundario (6.500hz)
-  case 6400 ... 6800:
-      colorSc = colors[5];
-      turnOnLeds(colorSc, 0);
-      break;
-  // amarelo escuro (7.000hz)
-  case 6900 ... 7300:
+  // (6.100hz)
+  case 5900 ... 6300:
       colorPr = colors[6];
       break;
-  // amarelo escuro (7.500hz)
-  case 7400 ... 7800:
-      colorSc = colors[6];
-      turnOnLeds(colorSc, 0);
-      break;
-  // amarelo claro (8.000hz)
-  case 7900 ... 8300:
+  // (6.600hz)
+  case 6400 ... 6800:
       colorPr = colors[7];
       break;
-  // amarelo claro  (8.500hz)
-  case 8400 ... 8800:
-      colorSc = colors[7];
-      turnOnLeds(colorSc, 0);
+  // (7.500hz)
+  case 6900 ... 7900:
+      randomEffectMijoDoCachorroAlado();
       break;
-  // roxo primario (9.000hz)
-  case 8900 ... 9300:
-      colorPr = colors[8];
+  // (8.500hz)
+  case 8000 ... 8900:
+      cortinaEffect();
       break;
-  // roxo secundario (9.500hz)
-  case 9400 ... 9800:
-      colorSc = colors[8];
-      turnOnLeds(colorSc, 0);
-      break;
-  // laranja primario (10.000hz)
-  case 9900 ... 10300:
-      colorPr = colors[9];
-      break;
-  // laranja secundario (10.500hz)
-  case 10400 ... 10800:
-      colorSc = colors[9];
-      turnOnLeds(colorSc, 0);
+  // (9.500hz)
+  case 9000 ... 9900:
+      fadeOut();
       break;
   }
 }
+
 // -----------------------------------------------------------------------------
 // Loop principal do ESP
 // -----------------------------------------------------------------------------
-
 void freqMeasure() {
   if (freqInput.available()) {
     freqSum = freqSum + freqInput.read();
@@ -549,19 +626,22 @@ void freqMeasure() {
   }
   if (freqTimeout > freqIntervalTime) {
     if (freqCount > 0) {
-      int freq = (int)(((freqInput.countToFrequency(freqSum / freqCount) / 2.67)+30)/100);
+      int freq = (int)(freqInput.countToFrequency(freqSum / freqCount)/100);
       currentFreq = freq * 100;
       if((int)abs(currentFreq - prevFreq) > frequencyColorGap) {
         freqChangeCount++;
+      } else {
+        freqChangeCount = 0;
       }
       if(freqChangeCount > 5) {
+//         Serial.print("Changed: ");
+//         Serial.println(currentFreq);
         prevFreq = currentFreq;
-        Serial.print("changed: ");
-        Serial.print(currentFreq, DEC);
         changedFrequency(currentFreq);
         freqChangeCount = 0;
-       }
+      }
     } else {
+      freqChangeCount = 0;
 //      Serial.print("(no pulses)");
     }
     freqSum = 0;
@@ -573,138 +653,158 @@ void freqMeasure() {
 void keypadClicked() {
   char key = keypad.getKey();// Read the key
   if (key){
-    Serial.print("Key Pressed: ");
-    Serial.println(key);
+    // Serial.print("Key Pressed: ");
+    // Serial.println(key);
     changeColors(key);
   }
 }
 
+boolean ledsInPrimary[NUM_PADS] = { false, false, false, false, false, false, false, false, false };
+elapsedMillis ledsTimeout[NUM_PADS];
+
 void padLoop1() {
 //  pads[0].tick();
   // while(1) {
-     Serial.print("digitalRead(PIEZO_PIN_1): ");
-     Serial.println(digitalRead(PIEZO_PIN_1));
+    //  Serial.print("digitalRead(PIEZO_PIN_1): ");
+    //  Serial.println(digitalRead(PIEZO_PIN_1));
     // if(digitalRead(PIEZO_PIN_1) == HIGH){
   // if(analogRead(PIEZO_PIN_1) > threshold){
-      triggerLeds(MODE_SOLID_PR, 0, 0, colorPr);
+      triggerLeds(MODE_SOLID_PR, ledStripes[0].ledPadType.typeId, 0, colorPr);
       usbMIDI.sendNoteOn(36, 127, 1);
-      
+      ledsTimeout[0] = 0;
+      ledsInPrimary[0] = true;
 //      triggerLeds(MODE_SOLID_PR, 0, 0, colorSc);
     // }
     // threads.delay(1000);
   // }
 }
+
 void padLoop2() {
 //  pads[1].tick();
   // while(1) {
     // if(digitalRead(PIEZO_PIN_2) == HIGH){
     // if(analogRead(PIEZO_PIN_2) > threshold){
-      Serial.print("digitalRead(PIEZO_PIN_2): ");
-      Serial.println(digitalRead(PIEZO_PIN_2));
-      triggerLeds(MODE_SOLID_PR, 1, 1, colorPr);
+      // Serial.print("digitalRead(PIEZO_PIN_2): ");
+      // Serial.println(digitalRead(PIEZO_PIN_2));
+      triggerLeds(MODE_SOLID_PR, ledStripes[1].ledPadType.typeId, 1, colorPr);
       usbMIDI.sendNoteOn(37, 127, 1);
-      
+      ledsTimeout[1] = 0;
+      ledsInPrimary[1] = true;
 //      triggerLeds(MODE_SOLID_PR, 1, 1, colorSc);
     // } 
     // threads.delay(1000);
   // }
 }
+
 void padLoop3() {
 //  pads[2].tick();
   // while(1) {
     // if(digitalRead(PIEZO_PIN_3) == HIGH){
     // if(analogRead(PIEZO_PIN_3) > threshold){
-      Serial.print("digitalRead(PIEZO_PIN_3): ");
-      Serial.println(digitalRead(PIEZO_PIN_3));
-      triggerLeds(MODE_SOLID_PR, 2, 2, colorPr);
+      // Serial.print("digitalRead(PIEZO_PIN_3): ");
+      // Serial.println(digitalRead(PIEZO_PIN_3));
+      triggerLeds(MODE_SOLID_PR, ledStripes[2].ledPadType.typeId, 2, colorPr);
       usbMIDI.sendNoteOn(38, 127, 1);
-      
+      ledsTimeout[2] = 0;
+      ledsInPrimary[2] = true;
 //      triggerLeds(MODE_SOLID_PR, 2, 2, colorSc);
     // }
     // threads.delay(1000);
   // }
 }
+
 void padLoop4() {
 //  pads[3].tick();
   // while(1) {
     // if(digitalRead(PIEZO_PIN_4) == HIGH){
     // if(analogRead(PIEZO_PIN_4) > threshold){
-      Serial.print("digitalRead(PIEZO_PIN_4): ");
-      Serial.println(digitalRead(PIEZO_PIN_4));
-      triggerLeds(MODE_SOLID_PR, 3, 3, colorPr);
+      // Serial.print("digitalRead(PIEZO_PIN_4): ");
+      // Serial.println(digitalRead(PIEZO_PIN_4));
+      triggerLeds(MODE_SOLID_PR, ledStripes[3].ledPadType.typeId, 3, colorPr);
       usbMIDI.sendNoteOn(39, 127, 1);
-      
+      ledsTimeout[3] = 0;
+      ledsInPrimary[3] = true;
 //      triggerLeds(MODE_SOLID_PR, 3, 3, colorSc);
     // }
     // threads.delay(1000);
   // }
 }
+
 void padLoop5() {
 //  pads[4].tick();
   // while(1) {
     // if(digitalRead(PIEZO_PIN_5) == HIGH){
     // if(analogRead(PIEZO_PIN_5) > threshold){
-      Serial.print("digitalRead(PIEZO_PIN_5): ");
-      Serial.println(digitalRead(PIEZO_PIN_5));
-      triggerLeds(MODE_SOLID_PR, 4, 4, colorPr);
+      // Serial.print("digitalRead(PIEZO_PIN_5): ");
+      // Serial.println(digitalRead(PIEZO_PIN_5));
+      triggerLeds(MODE_SOLID_PR, ledStripes[4].ledPadType.typeId, 4, colorPr);
       usbMIDI.sendNoteOn(40, 127, 1);
-      
+      ledsTimeout[4] = 0;
+      ledsInPrimary[4] = true;
 //      triggerLeds(MODE_SOLID_PR, 4, 4, colorSc);
     // }
     // threads.delay(1000);
   // }
 }
+
 void padLoop6() {
 //  pads[5].tick();
   // while(1) {
   //   if(digitalRead(PIEZO_PIN_6) == HIGH){
     // if(analogRead(PIEZO_PIN_6) > threshold){
-      Serial.print("digitalRead(PIEZO_PIN_6): ");
-      Serial.println(digitalRead(PIEZO_PIN_6));
-      triggerLeds(MODE_SOLID_PR, 5, 5, colorPr);
+      // Serial.print("digitalRead(PIEZO_PIN_6): ");
+      // Serial.println(digitalRead(PIEZO_PIN_6));
+      triggerLeds(MODE_SOLID_PR, ledStripes[5].ledPadType.typeId, 5, colorPr);
       usbMIDI.sendNoteOn(45, 127, 1);
-      
+      ledsTimeout[5] = 0;
+      ledsInPrimary[5] = true;
 //      triggerLeds(MODE_SOLID_PR, 5, 5, colorSc);
     // }
     // threads.delay(1000);
   // }
 }
+
 void padLoop7() {
 //  pads[6].tick();
   // while(1) {
   //   if(digitalRead(PIEZO_PIN_7) == HIGH){
     // if(analogRead(PIEZO_PIN_7) > threshold){
-      Serial.print("digitalRead(PIEZO_PIN_7): ");
-      Serial.println(digitalRead(PIEZO_PIN_7));
-      triggerLeds(MODE_SOLID_PR, 6, 6, colorPr);
+      // Serial.print("digitalRead(PIEZO_PIN_7): ");
+      // Serial.println(digitalRead(PIEZO_PIN_7));
+      triggerLeds(MODE_SOLID_PR, ledStripes[6].ledPadType.typeId, 6, colorPr);
       usbMIDI.sendNoteOn(42, 127, 1);
-      
+      ledsTimeout[6] = 0;
+      ledsInPrimary[6] = true;
 //      triggerLeds(MODE_SOLID_PR, 6, 6, colorSc);
     // }
     // threads.delay(1000);
   // }
 }
+
 void padLoop8() {
 //  pads[7].tick();
   // while(1) {
   //   if(digitalRead(PIEZO_PIN_8) == HIGH){
     // if(analogRead(PIEZO_PIN_8) > threshold){
-      triggerLeds(MODE_SOLID_PR, 7, 7, colorPr);
+      triggerLeds(MODE_SOLID_PR, ledStripes[7].ledPadType.typeId, 7, colorPr);
       usbMIDI.sendNoteOn(43, 127, 1);
-      
+      ledsTimeout[7] = 0;
+      ledsInPrimary[7] = true;
 //      triggerLeds(MODE_SOLID_PR, 7, 7, colorSc);
     // }
     // threads.delay(1000);
   // }
 }
+
 void padLoop9() {
   //  pads[8].tick();
   // while(1) {
   //   if(digitalRead(PIEZO_PIN_9) == HIGH){
     // if(analogRead(PIEZO_PIN_9) > threshold){
-      triggerLeds(MODE_SOLID_PR, 8, 8, colorPr);
+      triggerLeds(MODE_SOLID_PR, ledStripes[8].ledPadType.typeId, 8, colorPr);
       usbMIDI.sendNoteOn(44, 127, 1);
-      
+      ledsTimeout[8] = 0;
+      ledsInPrimary[8] = true;
 //      triggerLeds(MODE_SOLID_PR, 8, 8, colorSc);
     // }
     // threads.delay(1000);
@@ -717,8 +817,8 @@ void padLoop9() {
 void setup()
 {
   Serial.begin(115200);
-  while (!Serial) ; // wait for Arduino Serial Monitor
-  delay(10);
+//   while (!Serial) ; // wait for Arduino Serial Monitor
+//   delay(10);
   Serial.println("Iniciando o projeto");
   Serial.println("alive");
   delay(10);
@@ -779,7 +879,21 @@ void setup()
 //  attachInterrupt(digitalPinToInterrupt(KEYPAD_PIN_8), keypadClicked, HIGH);
 }
 
+int ledDelay = 60;
+void ledsToSecundary(int ledIndex) {
+  if (ledsTimeout[ledIndex] > ledDelay) {
+    triggerLeds(MODE_SOLID_SC, ledStripes[ledIndex].ledPadType.typeId, ledIndex, colorSc);
+    ledsInPrimary[ledIndex] = false;
+  }
+}
+
 void loop() {
   freqMeasure();
   keypadClicked();
+  for (int i = 0; i < NUM_PADS; i++) {
+//    Serial.println(ledsInPrimary[i]);
+    if(ledsInPrimary[i]) {
+      ledsToSecundary(i);
+    }
+  }
 }
