@@ -254,7 +254,6 @@ void triggerLeds(uint8_t modeId, uint8_t typePadId, uint8_t ledPadIndex, uint32_
       ledStripes[ledPadIndex].neoPixelStripe->setPixelColor(i, color); //  Set pixel's color (in RAM)
   }
   ledStripes[ledPadIndex].neoPixelStripe->show();                  //  Update strip to match
-  ledStripes[ledPadIndex].neoPixelStripe->show();                  //  Update strip to match
   // Serial.println("--------------------------------------------");
   // Serial.println(String(ledPadIndex));
   // Serial.println("tipo: " + String(ledStripes[ledPadIndex].ledPadType.typeId));
@@ -968,7 +967,7 @@ void setup()
   // attachInterrupt(digitalPinToInterrupt(KEYPAD_PIN_1), keypadClicked, HIGH);
   // attachInterrupt(digitalPinToInterrupt(KEYPAD_PIN_2), keypadClicked, HIGH);
   // attachInterrupt(digitalPinToInterrupt(KEYPAD_PIN_3), keypadClicked, HIGH);
-  // attachInterrupt(digitalPinToInterrupt(KEYPAD_PIN_4), keypadClicked, HIGH);
+  // attachInterrupt(digitalPinToInterrupt(KEYPAD_PIN_4), keypaClicked, HIGH);
   // attachInterrupt(digitalPinToInterrupt(KEYPAD_PIN_5), keypadClicked, HIGH);
   // attachInterrupt(digitalPinToInterrupt(KEYPAD_PIN_6), keypadClicked, HIGH);
   // attachInterrupt(digitalPinToInterrupt(KEYPAD_PIN_7), keypadClicked, HIGH);
