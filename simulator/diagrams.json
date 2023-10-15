@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "author": "laurie_ann",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "wokwi-arduino-uno", "id": "uno", "top": 0, "left": 0, "attrs": {} },
+    {
+      "type": "wokwi-neopixel-canvas",
+      "id": "neopixels1",
+      "top": 0,
+      "left": 200,
+      "rotate": 90,
+      "attrs": { "rows": "27", "cols": "6", "pixelate": "circle", "matrixBrightness": "3.5" }
+    },
+    {
+      "type": "wokwi-neopixel-canvas",
+      "id": "neopixels2",
+      "top": 150,
+      "left": 200,
+      "rotate": 90,
+      "attrs": { "rows": "27", "cols": "6", "pixelate": "circle", "matrixBrightness": "3.5" }
+    },
+    {
+      "type": "wokwi-neopixel-canvas",
+      "id": "neopixels3",
+      "top": 200,
+      "left": 300,
+      "rotate": 90,
+      "attrs": { "rows": "36", "cols": "6", "pixelate": "circle", "matrixBrightness": "3.5" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn1",
+      "top": 96.1,
+      "left": 371.1,
+      "rotate": 270,
+      "attrs": { "color": "green", "bounce": "0" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn2",
+      "top": 96.1,
+      "left": 476.7,
+      "rotate": 270,
+      "attrs": { "color": "yellow", "bounce": "0" }
+    }
+  ],
+  "connections": [
+    [ "uno:6", "neopixels1:DIN", "green", [ "v-22", "h-140", "*", "v0" ] ],
+    [ "uno:7", "neopixels2:DIN", "green", [ "v-28", "h-120", "*", "v0" ] ],
+    [ "uno:8", "neopixels3:DIN", "green", [ "v-34", "h-100", "*", "v0" ] ],
+    [ "uno:GND.2", "neopixels1:VSS", "black", [ "v30", "h-190", "*", "v0" ] ],
+    [ "uno:GND.2", "neopixels2:VSS", "black", [ "v30", "h-190", "*", "v0" ] ],
+    [ "uno:GND.2", "neopixels3:VSS", "black", [ "v30", "h-190", "*", "v0" ] ],
+    [ "uno:5V", "neopixels1:VDD", "red", [ "v24", "h-170", "*", "v0" ] ],
+    [ "uno:5V", "neopixels2:VDD", "red", [ "v24", "h-170", "*", "v0" ] ],
+    [ "uno:5V", "neopixels3:VDD", "red", [ "v24", "h-170", "*", "v0" ] ],
+    [ "btn1:1.l", "uno:GND.2", "black", [ "v0" ] ],
+    [ "btn1:2.l", "uno:A0", "white", [ "v38.4", "h-211" ] ],
+    [ "btn2:1.l", "uno:GND.2", "black", [ "v0" ] ],
+    [ "btn2:2.l", "uno:A1", "white", [ "v41.9", "h-300.7" ] ]
+  ],
+  "dependencies": {}
+}
